@@ -8,7 +8,7 @@
 ## bar plots to visualize changes of the RNA characteristics in               ##
 ## up/downregulated genes                                                     ##
 ##                                                                            ##
-## Created by Jan Jelí­nek (jan.jelinek@biomed.cas.cz)                         ##
+## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
 ## Last update: 2024-05-23                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
