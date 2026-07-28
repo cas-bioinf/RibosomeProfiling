@@ -9,8 +9,8 @@
 ## Differential analysis of count data – the DESeq2 package; and Analyzing    ##
 ## RNA-seq data with DESeq2.                                                  ##
 ##                                                                            ##
-## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2022-09-15                                                    ##
+## Created by Jan Jelí­nek (jan.jelinek@biomed.cas.cz)                         ##
+## Last update: 2027-07-25                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -48,7 +48,7 @@ help <- function(error = c()) {
                 "                                                     with design of the experiment (containing rownames - sample",
                 "                                                     identifiers - and columns 'assay' and 'siRNA'; with colnames)",
                 "                                                     and a tab-separated table <counts> with gene counts (containing",
-                "                                                     rownames - Ensembl gene identifiers - and one column for each",
+                "                                                     rownames - gene/ transcript identifiers - and one column for each",
                 "                                                     sample identifier).",
                 "",
                 "Options:",
@@ -60,6 +60,10 @@ help <- function(error = c()) {
                 "  --padj <threshold>           Space-separated thresholds on p_adj to be considered as significantly changed.",
                 "                               The default threshold is 0.05.",
                 "  --pca_ids {TRUE|FALSE}       Whether to show sample identifiers in PCA plots. They are not shown by default.",
+                "  --reference1 <reference>     Specify reference level for the first column. 'mRNA' is used by default.",
+                "  --reference2 <reference>     Specify reference level for the second column. 'nt' is used by default.",
+                "  --filter <filter>            An attribute name that should be used to pair rownames from <counts> with",
+                "                               biomaRt records. If not specified, 'ensembl_gene_id' is used by default.",
                 "  --use_bm_cache {TRUE|FALSE}  Whether to use cache when querying biomaRt. Cache is not use by default (it",
                 "                               makes a problem in some older versions of R."),
               error)
@@ -81,6 +85,12 @@ for (i in seq(3, length(args), by=2)) {
     "--padj"={ padjs = as.numeric(unlist(strsplit(args[i+1], split=" "))) },
     # Whether PCA plots should contain sample identifiers
     "--pca_ids"={ pcaIds = parse.boolean(args[i+1], "pca_ids") },
+    # What identifier is used to match with BioMart
+    "--filter"={ filter=args[i+1] },
+    # Reference level for the first column
+    "--reference1"={ reference1=args[i+1] },
+    # Reference level for the second column
+    "--reference2"={ reference2=args[i+1] },
     # Whether BioMart cache should be used (it does not works in some combinations of installed packages)
     "--use_bm_cache"={ useBMcache = parse.boolean(args[i+1], "use_bm_cache") }
   )
@@ -91,7 +101,7 @@ countsPath = args[2]
 
 
 #### Set defaults if not overwritten
-if (! exists("workingDir")) {
+if (! exists("workingDir", inherits=F)) {
   # Derive dirname from counts name by adding the lowest unsigned integer to get non-existing dirname
   baseName = tools::file_path_sans_ext(countsPath)
   i = 1
@@ -103,25 +113,34 @@ if (! exists("workingDir")) {
     i = i+1
   }
 }
-if (!exists("extension")) {
+if (!exists("extension", inherits=F)) {
   extension = "pdf"
 } else {
   check.extension(extension)
 }
-if (! exists("padjs")) {
+if (! exists("padjs", inherits=F)) {
   padjs = c(0.05)
 }
-if (!exists("pcaIds")) {
+if (!exists("pcaIds", inherits=F)) {
   pcaIds = FALSE
 }
-if (!exists("useBMcache")) {
+if (!exists("filter", inherits=F)) {
+  filter = "ensembl_gene_id"
+}
+if (!exists("reference1", inherits=F)) {
+  reference1 = "mRNA"
+}
+if (!exists("reference2", inherits=F)) {
+  reference2 = "nt"
+}
+if (!exists("useBMcache", inherits=F)) {
   useBMcache = FALSE
 }
 
 
 #### External libraries
 # Check whether all used libraries are installed
-check.installed("biomaRt", "DESeq2", "dplyr", "ggplot2", "gplots", "ggrepel", "RColorBrewer", "tools")
+check.installed("biomaRt", "DESeq2", "dbplyr", "dplyr", "ggplot2", "gplots", "ggrepel", "RColorBrewer", "RSQLite", "tools", "xml2")
 # Load intensively used libraries
 library(DESeq2)
 library(ggplot2)
@@ -138,8 +157,8 @@ if (dim(designTable)[1] != dim(unique(dplyr::group_by_all(designTable)))[1]) {
   data = collapseReplicates(data, factor(paste(designTable$assay, designTable$siRNA, designTable$id, sep="_")), colnames(data))
 }
 # Set reference levels to mRNA and nt
-data$assay = relevel(data$assay, "mRNA")
-data$siRNA = relevel(data$siRNA, "nt")
+data$assay = relevel(data$assay, reference1)
+data$siRNA = relevel(data$siRNA, reference2)
 # Remove rows with zero counts
 data = DESeq(data[rowSums(counts(data)) >0])
 # normalize to library size
@@ -162,7 +181,7 @@ gplots::heatmap.2(as.matrix(dist(t(assay(data.transformed)))), trace="none", col
 dev.off()
 # Make PCA plots
 plot_PCA = function(data, filename) {
-  pca = plotPCA(data, intgroup=c("siRNA","assay"), returnData=TRUE)
+  pca = plotPCA(data, intgroup=c("siRNA","assay"), returnData=TRUE, ntop=nrow(data))
   percentVar = round(100*attr(pca, "percentVar"))
   plot = ggplot(pca, aes(PC1, PC2, fill=siRNA, shape=assay)) +
          geom_point(size=3) +
@@ -176,55 +195,64 @@ plot_PCA = function(data, filename) {
   ggsave(paste(filename, extension, sep="."), plot)
 }
 plot_PCA(data.transformed, "PCA")
-for (assay in c("FP", "mRNA")) {
+for (assay in unique(designTable$assay)) {
   plot_PCA(data.transformed[, data.transformed$assay %in% c(assay)], paste("PCA",assay, sep="-"))
 }
 
 
 #### Create results tables and show summaries
-ensembl = biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
+# Download annotations from biomaRt
+annotations = biomaRt::getBM(attributes=unique(c(filter,c("ensembl_gene_id","entrezgene_id","hgnc_symbol","go_id","name_1006"))),
+                             filters=filter, values=rownames(countsTable),
+                             mart=biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl"), useCache=useBMcache)
+# Aggregate sorted unique non-empty values for each id
+annotations = aggregate(annotations[, colnames(annotations)[colnames(annotations) != filter]], annotations[filter],
+                        function(x) paste(sort(unique(x[nzchar(x)])), collapse="; "))
 process_results = function(result, type) {
   # Show summaries
   lapply(padjs,summary,object=result)
   # Add other gene IDs and GO IDs
-  result$ensembl = rownames(result)
-  mapping = biomaRt::getBM(attributes=c("ensembl_gene_id","entrezgene_id","hgnc_symbol","go_id","name_1006"), filters="ensembl_gene_id", values=result$ensembl, mart=ensembl, useCache=useBMcache)
-  mapping = mapping[match(result$ensembl, mapping$ensembl_gene_id),]
+  mapping = annotations[match(rownames(result), annotations[,filter]),]
+  result$ensembl     = mapping$ensembl_gene_id
   result$entrez      = mapping$entrezgene_id
   result$hgnc_symbol = mapping$hgnc_symbol
   result$go_id       = mapping$go_id
   result$name_1006   = mapping$name_1006
   result.df = as.data.frame(result)
   # Save result tables
-  write.table(result.df, sep="\t", col.names=NA, file=paste0(type,"-",label,"_vs_nt.tbl"))
+  write.table(result.df, sep="\t", col.names=NA, file=paste0(type,"-",label2,"_vs_",reference2,".tbl"))
   for (padj in padjs) {
     sig = result.df[which(result.df$padj < padj),]
-    write.table(sig[order(sig$log2FoldChange),], sep="\t", col.names=NA, file=paste0("sig",padj,"-",type,"-",label,"_vs_nt.tbl"))
+    write.table(sig[order(sig$log2FoldChange),], sep="\t", col.names=NA, file=paste0("sig",padj,"-",type,"-",label2,"_vs_",reference2,".tbl"))
   }
   # Create MA plot
-  get(extension)(paste0("MA_plot-", type, "-", label, "_vs_nt.", extension))
+  get(extension)(paste0("MA_plot-", type, "-", label2, "_vs_",reference2,".", extension))
   plotMA(result, ylim=c(-2,2))
   dev.off()
   # Generate histogram of pvalue distribution
-  get(extension)(paste0("pvalue-histogram-", type, "_", label, "_vs_nt.", extension))
-  hist(result$pvalue, breaks=20, col="grey", main=paste("Histogram of p-values for",label,"vs nt"), xlab=paste("p-value",type,label,"vs nt"))
+  get(extension)(paste0("pvalue-histogram-", type, "_", label2, "_vs_",reference2,".", extension))
+  hist(result$pvalue, breaks=20, col="grey", main=paste("Histogram of p-values for",label2,"vs",reference2), xlab=paste("p-value",type,label2,"vs",reference2))
   dev.off()
   # Create Volcano plot
-  result.df$Expression = dplyr::case_when(result.df$log2FoldChange > 0 & result.df$padj <= 0.05 ~ "Upregulated",
-                                          result.df$log2FoldChange < 0 & result.df$padj <= 0.05 ~ "Downregulated",
-                                          TRUE ~ "Unchanged")
+  result.df$Expression = factor(dplyr::case_when(result.df$log2FoldChange > 0 & result.df$padj <= 0.05 ~ "Upregulated",
+                                                 result.df$log2FoldChange < 0 & result.df$padj <= 0.05 ~ "Downregulated",
+                                                 TRUE ~ "Unchanged"),
+                                c("Upregulated", "Unchanged", "Downregulated"))
   ggplot(result.df, aes(x=log2FoldChange, y=-log10(padj), col=Expression)) +
-    geom_point(size = 0.5) +
+    geom_point(size = 0.5, show.legend=TRUE) +
     xlab(expression("log"[2]*"(FC)")) + 
     ylab(expression("-log"[10]*"(p-adjusted)")) +
-    scale_color_manual(values=c("blue", "grey", "red")) +
-    guides(colour = guide_legend(override.aes=list(size=2), reverse=T)) 
-  ggsave(paste0("Volcano-", type, "-", label, "_vs_nt.", extension))
+    scale_color_manual(values=c("blue", "grey", "red"), drop=FALSE) + 
+    guides(colour = guide_legend(override.aes=list(size=2))) 
+  ggsave(paste0("Volcano-", type, "-", label2, "_vs_",reference2,".", extension))
 }
-# For each non-nt siRNA process mRNA, FP and TE
-labels = unique(designTable[,"siRNA"])
-for (label in labels[labels!="nt"]) {
-  process_results(results(data, name=paste("siRNA",label,"vs_nt", sep="_")), "mRNA")
-  process_results(results(data, contrast=list(c(paste("siRNA",label,"vs_nt", sep="_"), paste0("assayFP.siRNA",label)))), "FP")
-  process_results(results(data, name=paste0("assayFP.siRNA",label)), "TE")
+# For each treated siRNA process mRNA, FP and TE
+labels1 = unique(designTable$assay)
+labels2 = unique(designTable$siRNA)
+for (label1 in labels1[labels1!=reference1]) {
+  for (label2 in labels2[labels2!=reference2]) {
+    process_results(results(data, name=paste("siRNA",label2,"vs",reference2, sep="_")), reference1)
+    process_results(results(data, contrast=list(c(paste("siRNA",label2,"vs",reference2, sep="_"), paste0("assay",label1,".siRNA",label2)))), label1)
+    process_results(results(data, name=paste0("assay",label1,".siRNA",label2)), "TE")
+  }
 }
