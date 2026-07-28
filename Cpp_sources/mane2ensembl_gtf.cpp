@@ -1,5 +1,5 @@
 // Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)
-// Last update: 2021-08-26
+// Last update: 2026-07-28
 // Released under Apache License 2.0
 
 #include <vector>
@@ -124,14 +124,15 @@ int main(int argc, char* argv[]) {
     std::cout << "2. 'UTR' feature is classified as 'five_prime_utr' or 'three_prime_utr';\n";
     std::cout << "3. stop_codon is not considered to be a part of 3'UTR;\n";
     std::cout << "4. gene_id attribute is splitted into gene_id and gene_version, the same for transcript_id etc.;\n";
-    std::cout << "5. 'gene_type' tag is replaced by 'gene_biotype', the same for 'transcript_type'." << std::endl;
+    std::cout << "5. 'gene_type' tag is replaced by 'gene_biotype', the same for 'transcript_type'.\n\n";
+<     std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2021-08-26; license: Apache License 2.0" << std::endl;
     return (argc == 1) ? 0 : 1;
   }
 
   // Input GTF file
-  std::ifstream input(/*/"C:\\Working\\Valasek\\_references\\genome\\ensembl\\MANE.GRCh38.v0.95.select_ensembl_genomic.gtf" /*/argv[1]/**/);
+  std::ifstream input(argv[1]);
   // Output GTF file
-  std::ofstream output(/*/"C:\\Working\\Valasek\\_references\\genome\\ensembl\\MANE.GRCh38.v0.95.select_ensembl_genomic-104.gtf" /*/argv[2]/**/);
+  std::ofstream output(argv[2]);
   // Transcript_id of the currently processed transcript
   std::string current_transcript = "";
   // Boundaries of start codon
