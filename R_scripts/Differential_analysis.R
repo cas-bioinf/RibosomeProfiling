@@ -10,7 +10,7 @@
 ## RNA-seq data with DESeq2.                                                  ##
 ##                                                                            ##
 ## Created by Jan Jelí­nek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2027-07-25                                                    ##
+## Last update: 2024-07-25                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
