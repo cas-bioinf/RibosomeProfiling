@@ -1,5 +1,5 @@
 // Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)
-// Last update: 2021-08-02
+// Last update: 2026-07-28
 // Released under Apache License 2.0
 
 #include <set>
@@ -63,9 +63,10 @@ bool get_element(size_t& pos, const std::string& line, std::string& element) {
 
 int main(int argc, char* argv[]) {
   if (argc != 3) {
-	std::cout << "gc_content <genome> <annotations>\t Compute GC content for each feature type and gene id\n";
+	std::cout << "gc_content <genome> <annotations>\t Computes GC content for each feature type and gene id\n";
 	std::cout << "                                 \t based on <genome> in FASTA format and\n";
-	std::cout << "                                 \t its <annotations> in GTF file format." << std::endl;
+	std::cout << "                                 \t its <annotations> in GTF file format.\n";
+    std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2021-08-02; license: Apache License 2.0" << std::endl;
 	return (argc == 1) ? 0 : 1;
   }
 
@@ -154,6 +155,10 @@ int main(int argc, char* argv[]) {
 		if (!get_element(position, line, '"', element, "Unenclosed 'gene_id' field in a line within annotations file")) return 13;
 		std::string gene = element;
 
+		// Whether the sequence exists in the genomic file
+		if (sequences.find(chromosome) == sequences.end()) {
+		  continue;
+		}
 		// Stats for the current gene and feature
 		std::map<char, size_t>& stat = stats[chromosome][gene][feature];
 		// Sequence of the chromosome where the current gene is
