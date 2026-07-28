@@ -1,5 +1,5 @@
 // Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)
-// Last update: 2021-08-26
+// Last update: 2026-07-28
 // Released under Apache License 2.0
 
 #include <iostream>
@@ -7,7 +7,6 @@
 #include <sstream>
 #include <map>
 #include <vector>
-#include "filter_ambiguous_genes.h"
 
 /// <summary>
 /// Returns reference sequence name for the given alignment.
