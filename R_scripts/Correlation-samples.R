@@ -6,8 +6,8 @@
 ## A script to compute correlation coefficients of gene counts between two    ##
 ## samples and visualize them in a density scatterplot                        ##
 ##                                                                            ##
-## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2022-09-12                                                    ##
+## Created by Jan JelÃ­nek (jan.jelinek@biomed.cas.cz)                         ##
+## Last update: 2024-07-10                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -80,7 +80,8 @@ process = function(filename, id) {
   replicate[2] = replicate[2] + 1
   return(replicate)
 }
-replicates = merge(process(args[1],1), process(args[2],2), by="gene")
+replicates = merge(process(args[1],1), process(args[2],2), by="gene", all=TRUE)
+replicates[is.na(replicates)] = 1
 
 # Use threshold if defined; '>' instead of '>=' is because there are +1 for each gene count to have log meaningfull even for 0
 if (exists("threshold")) {
