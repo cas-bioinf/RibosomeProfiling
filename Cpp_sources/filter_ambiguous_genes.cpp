@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     std::cout << "                                                        \t are mapped into multiple transcripts from different\n";
     std::cout << "                                                        \t genes (multiple transcripts from the same gene are\n";
     std::cout << "                                                        \t allowed), and write the rest to <output> file.\n";
-    std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2021-08-26; license: Apache License 2.0" << std::endl;
+    std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-28; license: Apache License 2.0" << std::endl;
     return 0;
   }
 
