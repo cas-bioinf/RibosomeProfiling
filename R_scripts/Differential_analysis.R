@@ -80,11 +80,11 @@ for (i in seq(3, length(args), by=2)) {
     # Directory where to store results (will be created)
     "--output"={ workingDir=args[i+1] },
     # Plots file format (supported are pdf, svg and png
-    "--img"={ extension=args[i+1] },
+    "--img"={ extension=check.extension(args[i+1]) },
     # Threshold on p_adjusted value to consider a gene as significantly differentially expressed
-    "--padj"={ padjs = as.numeric(unlist(strsplit(args[i+1], split=" "))) },
+    "--padj"={ padjs = as.double(unlist(strsplit(args[i+1], split=" "))) },
     # Whether PCA plots should contain sample identifiers
-    "--pca_ids"={ pcaIds = parse.boolean(args[i+1], "pca_ids") },
+    "--pca_ids"={ pcaIds = parse.boolean(args[i+1], args[i]) },
     # What identifier is used to match with BioMart
     "--filter"={ filter=args[i+1] },
     # Reference level for the first column
@@ -92,12 +92,20 @@ for (i in seq(3, length(args), by=2)) {
     # Reference level for the second column
     "--reference2"={ reference2=args[i+1] },
     # Whether BioMart cache should be used (it does not works in some combinations of installed packages)
-    "--use_bm_cache"={ useBMcache = parse.boolean(args[i+1], "use_bm_cache") }
+    "--use_bm_cache"={ useBMcache = parse.boolean(args[i+1], args[i]) }
   )
 }
 # Assign mandatory arguments for easier changes
 designPath = args[1]
 countsPath = args[2]
+
+
+#### External libraries
+# Check whether all used libraries are installed
+check.installed("biomaRt", "DESeq2", "dbplyr", "dplyr", "ggplot2", "gplots", "ggrepel", "RColorBrewer", "RSQLite", "tools", "xml2")
+# Load intensively used libraries
+library(DESeq2)
+library(ggplot2)
 
 
 #### Set defaults if not overwritten
@@ -115,8 +123,6 @@ if (! exists("workingDir", inherits=F)) {
 }
 if (!exists("extension", inherits=F)) {
   extension = "pdf"
-} else {
-  check.extension(extension)
 }
 if (! exists("padjs", inherits=F)) {
   padjs = c(0.05)
@@ -138,15 +144,7 @@ if (!exists("useBMcache", inherits=F)) {
 }
 
 
-#### External libraries
-# Check whether all used libraries are installed
-check.installed("biomaRt", "DESeq2", "dbplyr", "dplyr", "ggplot2", "gplots", "ggrepel", "RColorBrewer", "RSQLite", "tools", "xml2")
-# Load intensively used libraries
-library(DESeq2)
-library(ggplot2)
-
-
-#### Initial processing of inputs
+#### Initial processing of input files
 # Read input files, select only samples required by designTable and make samples in the same order (required by DESeq2)
 designTable = read.delim(designPath, sep="\t", header=TRUE, row.names=1)
 countsTable = read.delim(countsPath, sep="\t", header=TRUE, row.names=1)[rownames(designTable)]
