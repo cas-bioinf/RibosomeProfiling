@@ -9,7 +9,7 @@
 ## Differential analysis of count data – the DESeq2 package; and Analyzing    ##
 ## RNA-seq data with DESeq2.                                                  ##
 ##                                                                            ##
-## Created by Jan Jelí­nek (jan.jelinek@biomed.cas.cz)                         ##
+## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
 ## Last update: 2024-07-25                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
