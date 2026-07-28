@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 	std::cout << "gc_content <genome> <annotations>\t Computes GC content for each feature type and gene id\n";
 	std::cout << "                                 \t based on <genome> in FASTA format and\n";
 	std::cout << "                                 \t its <annotations> in GTF file format.\n";
-    std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2021-08-02; license: Apache License 2.0" << std::endl;
+    std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-28; license: Apache License 2.0" << std::endl;
 	return (argc == 1) ? 0 : 1;
   }
 
