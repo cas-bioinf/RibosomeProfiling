@@ -6,7 +6,7 @@
 ## A script for visual check of triplet periodicity                           ##
 ##                                                                            ##
 ## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2022-10-06                                                    ##
+## Last update: 2024-08-01                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -75,7 +75,7 @@ annotation_dt <- create_annotation(gtfpath = args[1], dataSource = "ensemble", o
 reads_list <- bamtolist(bamfolder = args[2], annotation = annotation_dt)
 
 # Which columns well be expanded
-keys <- c("length", "dist", "region", "end")
+keys <- c("length", "distance", "region", "end")
 
 # Iterate over each BAM file
 for (name in names(reads_list)) {
@@ -87,7 +87,7 @@ for (name in names(reads_list)) {
   }
 
   # Extract read counts for each position and length in given ranges
-  heatmap <- rends_heat(reads_list, annotation_dt, utr5l=xlim[1]+overlap, cdsl=xlim[2]+overlap, utr3l=xlim[1]+overlap, old=old, sample=name)[["dt"]]
+  heatmap <- rends_heat(reads_list, annotation_dt, utr5l=xlim[1]+overlap, cdsl=xlim[2]+overlap, utr3l=xlim[1]+overlap, old=old, sample=name)[["count_dt"]]
 
   # To have continuous and the same y-ranges in all plots
   ranges <- sapply(keys, function(h) unique(heatmap[[h]]))
@@ -105,12 +105,12 @@ for (name in names(reads_list)) {
   rng=range(heatmap$count, na.rm = T)
 
   # Plotting
-  ggplot(heatmap[heatmap$region=="Distance from start (nt)",][heatmap$end=="5' end",], aes(dist, length, fill=count)) + geom_tile() + xlim(-xlim[1], xlim[2]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("5' end distance from start codon (nt)") + theme(title = element_text(hjust = 0.5))
+  ggplot(heatmap[heatmap$region=="Distance from start (nt)",][heatmap$end=="5' end",], aes(distance, length, fill=count)) + geom_tile() + xlim(-xlim[1], xlim[2]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("5' end distance from start codon (nt)") + theme(title = element_text(hjust = 0.5))
   ggsave(paste(output,name,"-begin-5.",extension, sep=""))
-  ggplot(heatmap[heatmap$region=="Distance from start (nt)",][heatmap$end=="3' end",], aes(dist, length, fill=count)) + geom_tile() + xlim(-xlim[1], xlim[2]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("3' end distance from start codon (nt)") + theme(title = element_text(hjust = 0.5))
+  ggplot(heatmap[heatmap$region=="Distance from start (nt)",][heatmap$end=="3' end",], aes(distance, length, fill=count)) + geom_tile() + xlim(-xlim[1], xlim[2]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("3' end distance from start codon (nt)") + theme(title = element_text(hjust = 0.5))
   ggsave(paste(output,name,"-begin-3.",extension, sep=""))
-  ggplot(heatmap[heatmap$region=="Distance from stop (nt)",][heatmap$end=="5' end",], aes(dist, length, fill=count)) + geom_tile() + xlim(-xlim[2], xlim[1]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("5' end distance from stop codon (nt)")  + theme(title = element_text(hjust = 0.5))
+  ggplot(heatmap[heatmap$region=="Distance from stop (nt)",][heatmap$end=="5' end",], aes(distance, length, fill=count)) + geom_tile() + xlim(-xlim[2], xlim[1]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("5' end distance from stop codon (nt)")  + theme(title = element_text(hjust = 0.5))
   ggsave(paste(output,name,"-end-5.",extension, sep=""))
-  ggplot(heatmap[heatmap$region=="Distance from stop (nt)",][heatmap$end=="3' end",], aes(dist, length, fill=count)) + geom_tile() + xlim(-xlim[2], xlim[1]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("3' end distance from stop codon (nt)")  + theme(title = element_text(hjust = 0.5))
+  ggplot(heatmap[heatmap$region=="Distance from stop (nt)",][heatmap$end=="3' end",], aes(distance, length, fill=count)) + geom_tile() + xlim(-xlim[2], xlim[1]) + scale_y_continuous(limits=ylim) + scale_fill_distiller(palette = "Spectral", trans="log10", limits=rng) + coord_fixed() + xlab("3' end distance from stop codon (nt)")  + theme(title = element_text(hjust = 0.5))
   ggsave(paste(output,name,"-end-3.",extension, sep=""))
 }
