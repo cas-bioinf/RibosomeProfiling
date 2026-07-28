@@ -45,28 +45,24 @@ help <- function(error = c()) {
                 "                                                               For <exclude>+ see --exclude option.",
                 "",
                 "Options:",
-                "  --exclude {TRUE|FALSE}               Whether there would be provided an additional list of DESeq2",
-                "                                       output statswhose significantly changed genes should not be",
-                "                                       considered as significantly changed in <deseq>+. List of these",
-                "                                       files should be provided as the last, should have the same",
-                "                                       length as <deseq>+ and the i-th item of <exclude>+ corresponds",
-                "                                       to the i-th item of <deseq>+.",
-                "  --header <headers>                   Space separated headers corresponding to <deseq>+ files.",
-                "                                       The headers should have the same order as files in <deseq>+.",
-                "                                       <deseq>+ filenames are used by default.",
-                "  --img {pdf|svg|png}                  What file format (and extension) to use to save the plots.",
-                "                                       Pdf is used by default.",
-                "  --padj <threshold>                   Threshold on p_adj to be considered as significantly changed.",
-                "                                       The default threshold is 0.05.",
-                "  --palette <palette>                  Space separated colors in HEX format to be used for plots.",
-                "                                       It must contains either 4 colours (unsignifficant,",
-                "                                       intersection, first only, second only), i.e. the same palette",
-                "                                       for each plot; or n+2 colours (unsignifficant, intersection,",
-                "                                       i-th file only...), i.e. constant color for <deseq> files",
-                "                                       accross all relevant plots. By default, GREY, RED, GREEN, BLUE",
-                "                                       is used with with 0.125 alpha channel for the GREY colour and",
-                "                                       0.5 for the rest.",
-                "  --prefix <prefix>                    Path prefix for the output files. Empty by default."),
+                "  --exclude {TRUE|FALSE}  Whether there would be provided an additional list of DESeq2 output stats whose",
+                "                          significantly changed genes should not be considered as significantly changed",
+                "                          in <deseq>+. List of these files should be provided as the last, should have",
+                "                          the same length as <deseq>+ and the i-th item of <exclude>+ corresponds",
+                "                          to the i-th item of <deseq>+.",
+                "  --header <headers>      Space separated headers corresponding to <deseq>+ files. The headers should have",
+                "                          the same order as files in <deseq>+. <deseq>+ filenames are used by default.",
+                "  --img {pdf|svg|png}     What file format (and extension) to use to save the plots.",
+                "                          Pdf is used by default.",
+                "  --padj <threshold>      Threshold on p_adj to be considered as significantly changed.",
+                "                          The default threshold is 0.05.",
+                "  --palette <palette>     Space separated colors in HEX format to be used for plots. It must contains",
+                "                          either 4 colours (unsignifficant, intersection, first only, second only), i.e.",
+                "                          the same palette for each plot; or n+2 colours (unsignifficant, intersection,",
+                "                          i-th file only...), i.e. constant color for <deseq> files accross all relevant",
+                "                          plots. By default, GREY, RED, GREEN, BLUE is used with with 0.125 alpha channel",
+                "                          for the GREY colour and 0.5 for the rest.",
+                "  --prefix <prefix>       Path prefix for the output files. Empty by default."),
               error)
 }
 
@@ -79,7 +75,7 @@ for (i in seq(1, length(args), by=2)) {
     # Prefix for output files
     "--prefix"={ prefix=args[i+1] },
     # Plots file format (supported are pdf, svg and png)
-    "--img"={ extension=args[i+1] },
+    "--img"={ extension=check.extension(args[i+1]) },
     # Space-separated headers for input files (in the same order)
     "--header"={ headers <- unlist(strsplit(args[i+1], split=" ")) },
     # Space-separated palette with either 4 colours (Unsignifficant, intersection, 1st only, 2nd only),
@@ -88,7 +84,7 @@ for (i in seq(1, length(args), by=2)) {
     # P_adjusted threshold
     "--padj"={ padj=as.double(args[i+1]) },
     # Whether an additional set with its significant genes to be considered as unchanged will be provided
-    "--exclude"={ exclude = parse.boolean(args[i+1], "exclude") },
+    "--exclude"={ exclude = parse.boolean(args[i+1], args[i]) },
     # Default
     {
       if (startsWith(args[i], "--")) {
@@ -145,8 +141,6 @@ if (!exists("prefix")) {
 }
 if (!exists("extension")) {
   extension = "pdf"
-} else {
-  check.extension(extension)
 }
 if (!exists("headers")) {
   headers=inputs
@@ -161,7 +155,7 @@ if (!exists("padj")) {
 
 #### Load all input data
 load_data = function(paths) {
-  return(lapply(paths, read.csv, sep='\t'))
+  return(lapply(paths, read_deseq))
 }
 data = load_data(inputs)
 if (exclude) {
