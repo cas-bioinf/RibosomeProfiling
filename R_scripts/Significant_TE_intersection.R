@@ -7,7 +7,7 @@
 ## knockdowns with highlighted signifficant genes                             ##
 ##                                                                            ##
 ## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2023-03-22                                                    ##
+## Last update: 2026-07-28                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -174,6 +174,13 @@ for (i in 1:(length-1)) {
     # Join the current files and prepare common tables (lables and axis limits)
     subdata = dplyr::inner_join(data[[i]], data[[j]], by="gene_id",
                                 suffix=c(paste0(".",headers[i]), paste0(".",headers[j])))
+    if (exclude) {
+      subdata = dplyr::inner_join(subdata, dplyr::inner_join(data.exclude[[i]], data.exclude[[j]], by="gene_id",
+                                                             suffix=c(paste0(".",headers[i]), paste0(".",headers[j]))),
+                                  by="gene_id", suffix=c("",".exc"))
+    }
+    # Remove genes with some undefined padj
+    subdata = subdata[rowSums(is.na(subdata[,grep("^padj", colnames(subdata))]))==0,]
     # Classes
     items = c("Both", headers[i], headers[j], "None")
     # Range of the examined columns
@@ -184,10 +191,10 @@ for (i in 1:(length-1)) {
     }
     # Prepare column with significance of the genes and reorder table by it
     if (exclude) {
-      subdata$Signifficant = factor(dplyr::case_when(subdata[padj_header(headers[i])] <= padj & data.exclude[[i]]$padj > padj &
-                                                     subdata[padj_header(headers[j])] <= padj & data.exclude[[j]]$padj > padj ~ items[1],
-                                                     subdata[padj_header(headers[i])] <= padj & data.exclude[[i]]$padj > padj ~ items[2],
-                                                     subdata[padj_header(headers[j])] <= padj & data.exclude[[j]]$padj > padj ~ items[3],
+      subdata$Signifficant = factor(dplyr::case_when(subdata[padj_header(headers[i])] <= padj & subdata[padj_exc_header(headers[i])] > padj &
+                                                     subdata[padj_header(headers[j])] <= padj & subdata[padj_exc_header(headers[j])] > padj ~ items[1],
+                                                     subdata[padj_header(headers[i])] <= padj & subdata[padj_exc_header(headers[i])] > padj ~ items[2],
+                                                     subdata[padj_header(headers[j])] <= padj & subdata[padj_exc_header(headers[j])] > padj ~ items[3],
                                                      TRUE ~ items[4]),
                                     items)
     } else {
