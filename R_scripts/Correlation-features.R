@@ -8,8 +8,8 @@
 ## bar plots to visualize changes of the RNA characteristics in               ##
 ## up/downregulated genes                                                     ##
 ##                                                                            ##
-## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2023-04-28                                                    ##
+## Created by Jan Jelí­nek (jan.jelinek@biomed.cas.cz)                         ##
+## Last update: 2024-05-23                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -72,15 +72,15 @@ if (length(args) > 2) {
            # Path prefix for output files
            "--prefix"={ prefix=args[i+1] },
            # Plots file format (supported are pdf, svg and png)
-           "--img"={ extension=args[i+1] },
+           "--img"={ extension=check.extension(args[i+1]) },
            # P_adjusted threshold
            "--padj"={ threshold=as.double(args[i+1]) },
            # Correlation coeficient to be evaluated
-           "--method"={ method=args[i+1] },
+           "--method"={ method=parse.correlation.method(args[i+1], args[i]) },
            # What significant genes should be considered as unchanged
            "--exclude"={ excludePath = args[i+1] },
            # Whether outliers should be plotted
-           "--outliers"={ outliers = parse.boolean(args[i+1], "outliers") },
+           "--outliers"={ outliers = parse.boolean(args[i+1], args[i]) },
            # Just save the final table in this file
            "--table"={ output.table = args[i+1] },
            # Unknown switcher
@@ -92,14 +92,20 @@ if (length(args) > 2) {
 maneStatsPath = args[1]
 deseqPath     = args[2]
 
+
+#### External libraries
+# Check whether all used libraries are installed
+check.installed("dplyr", "ggplot2", "stringr")
+# Load intensively used libraries
+library(ggplot2)
+
+
 #### Set defaults if not overwritten
 if (!exists("prefix")) {
   prefix = ""
 }
 if (!exists("extension")) {
   extension = "pdf"
-} else {
-  check.extension(extension)
 }
 if (!exists("threshold")) {
   threshold = 0.05
@@ -110,13 +116,6 @@ if (!exists("method")) {
 if (!exists("outliers")) {
   outliers=TRUE
 }
-
-
-#### External libraries
-# Check whether all used libraries are installed
-check.installed("dplyr", "ggplot2", "stringr")
-# Load intensively used libraries
-library(ggplot2)
 
 
 #### Generation of plots
@@ -213,20 +212,12 @@ process_feature = function(data, column, description, logarithmic, percentage, s
 }
 
 #### Read input files and create the final table
-# Read DESeq2 output file and repair its first header if missing
-read_deseq = function(path) {
-  file = read.csv(path, sep='\t')
-  if (colnames(file)[1] == "X") {
-    colnames(file)[1] = "gene_id"
-  }
-  return(file)
-}
 # Read input files
 maneStats = read.csv(maneStatsPath, sep='\t')
 deseq = read_deseq(deseqPath)
 if (exists("excludePath")) {
   exclude = read_deseq(excludePath)
-  if (! all(deseq$gene_id == exclude$gene_id)) {
+  if (! all(deseq$ensembl == exclude$ensembl)) {
     stop(paste("Files ", args[2], " and ",args[i+1],
                " does not contain the same genes or they are in a different order.", sep="'"))
   }
@@ -234,17 +225,17 @@ if (exists("excludePath")) {
 # Filter out Ids without defined p_adj (e.g. low mean normalized count i.e. its qualified decision cannot be made)
 data = deseq[!is.na(deseq$padj),]
 if (exists("exclude")) {
-  data = subset(data, gene_id %in% exclude[!is.na(exclude$padj),]$gene_id)
+  data = subset(data, ensembl %in% exclude[!is.na(exclude$padj),]$ensembl)
 }
 # Classify up- and down-regulated genes
 data$Direction = ifelse(data$padj>threshold, "Unchanged", ifelse(data$log2FoldChange>0, "Upregulated", "Downregulated"))
 if (exists("exclude")) {
-  data[data$gene_id %in% subset(exclude,padj<=threshold)$gene_id,]$Direction = "Unchanged"
+  data[data$ensembl %in% subset(exclude,padj<=threshold)$ensembl,]$Direction = "Unchanged"
 }
 data$Up =   ifelse(data$Direction ==   "Upregulated",   "Upregulated", "Background")
 data$Down = ifelse(data$Direction == "Downregulated", "Downregulated", "Background")
 # Construct a table with all informations about examined genes only
-data = merge(data, maneStats, by="gene_id")
+data = merge(data, maneStats, by.x="ensembl", by.y="gene_id")
 
 
 #### Just save the the final table to process it elsewhere
@@ -266,9 +257,9 @@ process_suffix = function(detail) {
 # Set settings for all features
 settings = setNames(data.frame(colnames(maneStats)[-1],stringsAsFactors=F), "header")
 settings[c("feature", "detail")] = stringr::str_split_fixed(settings$header, '\\.', 2)
-settings$logarithmic = ifelse(settings$feature == "length",     T, F)
-settings$percentage  = ifelse(settings$feature == "gc_content", T, F)
-settings$smallint    = ifelse(settings$feature == "uORF",       T, F)
+settings$logarithmic = ifelse(settings$feature == "length",                                    T, F)
+settings$percentage  = ifelse(settings$feature == "gc_content" | settings$feature == "codons", T, F)
+settings$smallint    = ifelse(settings$feature == "uORF",                                      T, F)
 settings = dplyr::mutate(settings, description=trimws(dplyr::case_when(detail == "exon" ~ "all exons",
                                                                        detail == "UTR5" ~ "5'UTR",
                                                                        detail == "UTR3" ~ "3'UTR",
@@ -285,6 +276,8 @@ settings = dplyr::mutate(settings, description=dplyr::case_when(feature == "gc_c
                                                                                                 description, "(bp)"),
                                                                 feature == "uORF"       ~ paste("Number of uORFs",
                                                                                                 description, "(#)"),
+                                                                feature == "codons"     ~ paste("Frequency of codon",
+                                                                                                description, "(%)"),
                                                                 TRUE                    ~ paste(gsub('_',' ',feature)
                                                                                                 , " - ", description)))
 
