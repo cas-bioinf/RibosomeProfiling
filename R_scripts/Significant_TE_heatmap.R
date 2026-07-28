@@ -6,27 +6,75 @@
 ## A script to generate a heatmap showing TE of significantly changed genes   ##
 ##                                                                            ##
 ## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2022-09-21                                                    ##
+## Last update: 2023-09-27                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
-# Parse arguments
-args = commandArgs(trailingOnly=TRUE)
-if (length(args)<1) {
-  stop("The script requires at least one input argument - input file(s) (results from DESeq2)")
+
+#### Load a script with commonly used functions to prevent duplication of code (except of this one)
+(function(){
+  paths = unlist(sapply(sys.frames(), function(f) f$ofile))
+  if (length(paths)) {
+    path = paths[length(paths)]
+  } else {
+    args = commandArgs()
+    positions = which(startsWith(args, "--file="))
+    if (length(positions)) {
+      path = substring(args[positions], 8)
+    } else {
+      path = "."
+    }
+  }
+  path = file.path(dirname(path), "common.R")
+  if (file.exists(path)) {
+    source(path)
+  } else {
+    stop("File 'common.R' is missing in the expected location, please repair the path or restore the file.")
+  }
+})()
+
+
+#### Prints help message and quit the script for possibility to call it from multiple points
+help <- function(error = c()) {
+  help.common(c("Significant_TE_heatmap.R -h                  Prints this message.",
+                "Significant_TE_heatmap.R [options] <input>+  The script generates a heatmap that shows TE of significantly changed genes.",
+                "                                             The script requires at least one filepath to a tab-separated table <input>",
+                "                                             ...",
+                "",
+                "Options:",
+                "  --bins <bins>        A number of bins that should be used to split data. The default number of bins is 255.",
+                "  --header <headers>   Space separated headers corresponding to <input>+ files. The headers should have",
+                "                       the same order as files in <input>+. <input>+ filenames are used by default.",
+                "  --img {pdf|svg|png}  What file format (and extension) to use to save the plots.",
+                "                       Pdf is used by default.",
+                "  --max <max>          The upper limit of bins. -<max> is used for the lower limit. The default boundary is 2.",
+                "  --output <path>      Where the ouptut plot should be saved.",
+                "                       If <path> is an existing directory, <path>/Significant_TE_heatmap.[file_format] is used",
+                "                       as the filename. If file format extension is missing, it is appended. If path is not",
+                "                       specified, the current working directory is used as <path>.",
+                "  --padj <threshold>   Space-separated thresholds on p_adj to be considered as significantly changed.",
+                "                       The default threshold is 0.05."),
+              error)
 }
+
+
+#### Parse command line arguments
+args = get.arguments()
+# Parse optional arguments
 for (i in seq(1, length(args), by=2)) {
   switch(args[i],
     # Output file
     "--output"={ output=args[i+1] },
+    # File format of output histograms
+    "--img"={ extension=check.extension(args[i+1]) },
     # Space-separated headers for input files (in the same order)
-    "--header"={ headers <- unlist(strsplit(args[2], split=" ")) },
+    "--header"={ headers <- unlist(strsplit(args[i+1], split=" ")) },
     # P_adjusted threshold
     "--padj"={ padj=as.double(args[i+1]) },
     # Number of bins to visualize
     "--bins"={ bins=as.integer(args[i+1]) },
     # Maximal (and -minimal) value to be displayed 
-    "--max"={ bound=as.integer(args[i+1]) },
+    "--max"={ bound=as.double(args[i+1]) },
     # Default
     {
       if (startsWith(args[i], "--")) {
@@ -43,27 +91,16 @@ if (! exists("inputs")) {
 }
 
 
-# Load libraries
-library(dplyr)
-library(gplots)
-library(tools)
-library(RColorBrewer)
+#### External libraries
+# Check whether all used libraries are installed
+check.installed("dplyr", "gplots", "tools", "RColorBrewer")
 
 
-# Set defaults if not overwritten
-length=length(inputs)
-if (exists("output")) {
-  extension=tolower(file_ext(output))
-  if (nchar(extension) == 0 || (extension != "pdf" && extension != "png" && extension != "svg" && extension != "tif" && extension != "tiff")) {
-    save="pdf"
-    output=paste(args[1],"pdf",sep=".")
-  } else {
-    save=extension
-  }
-} else {
-  save="pdf"
-  output="Significant_TE_heatmap.pdf"
-}
+#### Set defaults if not overwritten
+output = construct.filename(output, extension, "Significant_TE_heatmap")
+extension = output$extension
+output = output$filepath
+length = length(inputs)
 if (exists("headers")) {
   if (length(headers) != length) {
     stop("The number of headers must be the same as the number of input files")
@@ -82,24 +119,21 @@ if (! exists("bound")) {
 }
 
 
-# Join all data (first column is used for initialization; last column is added separately to easier adding of identifying suffix)
-data=read.csv(inputs[1],sep='\t')
-for (i in 1:(length-2)) {
-  data=inner_join(data,read.csv(inputs[i+1],sep='\t'),by="gene_id",suffix=c(paste0(".",headers[i]),""))
-}
-data=inner_join(data,read.csv(inputs[length],sep='\t'),by="gene_id",suffix=c(paste0(".",headers[length-1]),paste0(".",headers[length])))
-
-# Filter genes that are signifficant for at least one col
+#### Initial processing of input files
+# Read all input files; rename all columns that are not used for join to ensure uniqueness of column names; and finaly join by 'gene_id' column
+data = Reduce(function(x, y) dplyr::inner_join(x, y, by="gene_id"),
+              sapply(headers, function(x, data) setNames(data[[x]], gsub("^(?!gene_id$)(.*)$", paste("\\1", x, sep="."), names(data[[x]]), perl=T)),
+                     data=setNames(lapply(inputs, read_deseq), headers), simplify=F))
+# Filter genes that are significant for at least one column
 data=data[which(rowSums(data[grepl("^padj.", colnames(data))]<padj, na.rm=TRUE)>0),]
-
 # Select matrix of log_2 fold changes
 rownames(data)=data[,"gene_id"]
-log2foldchange=data[grepl("^log2FoldChange.", colnames(data))]
+log2foldchange=as.matrix(data[grepl("^log2FoldChange.", colnames(data))])
 colnames(log2foldchange)=headers
-log2foldchange=as.matrix(log2foldchange)
 
-# Plot heatmap
-colors=colorRampPalette(rev(brewer.pal(11,"RdBu")))(bins)
-get(save)(output)
-heatmap.2(log2foldchange, trace="none", col=colors, labRow=F, breaks = seq(-bound, bound, length.out = bins+1), key.xlab="log2FoldChange")
+
+#### Plot the heatmap
+colors=colorRampPalette(rev(RColorBrewer::brewer.pal(11,"RdBu")))(bins)
+get(extension)(output)
+gplots::heatmap.2(log2foldchange, trace="none", col=colors, labRow=F, breaks = seq(-bound, bound, length.out = bins+1), key.xlab="log2FoldChange")
 dev.off()
