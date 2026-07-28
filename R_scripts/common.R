@@ -28,7 +28,7 @@
 ## })()                                                                                                               ##
 ##                                                                                                                    ##
 ## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                                                                 ##
-## Last update: 2023-05-17                                                                                            ##
+## Last update: 2026-05-11                                                                                            ##
 ## Released under Apache License 2.0                                                                                  ##
 ########################################################################################################################
 
@@ -38,7 +38,11 @@ help.common <- function(message, error = c()) {
   if (length(error)) {
     con     = stderr()
     status  = 1
-    message = c(paste(error[1], paste0("'", error[-1], "'", collapse=", ")), "", message)
+    if (length(error) == 1) {
+      message = c(error, "", message)
+    } else {
+      message = c(paste(error[1], paste0("'", error[-1], "'", collapse=", ")), "", message)
+    }
   } else {
     con     = stdout()
     status  = 0
@@ -49,7 +53,7 @@ help.common <- function(message, error = c()) {
 
 
 #### Checks whether manual page was requested and either shows it (and quit), or returns command-line arguments
-get.arguments <- function(fun = help) {
+get.arguments <- function() {
   # Get arguments
   args = commandArgs(trailingOnly=TRUE)
   # Check whether manual page is requested
@@ -58,6 +62,12 @@ get.arguments <- function(fun = help) {
   }
   # Return arguments
   return(args)
+}
+
+
+#### Skip first n elements in a vector
+skip <- function(vec, n) {
+  return(vec[(n+1):length(vec)])
 }
 
 
@@ -75,15 +85,62 @@ check.parity <- function(args, even=T) {
 #### Parse argument and check whether it is a boolean
 parse.boolean <- function(arg, name) {
   ret = as.logical(arg)
-  if (is.na(ret)) stop(paste0("Unrecognized value of --",name," parameter, boolean expected: ",arg), call.=F)
+  if (is.na(ret)) stop(paste("Unrecognized value of", name ,"parameter, boolean expected:", arg), call.=F)
   return(ret)
 }
-
+#### Parse argument and check whether it is a boolean
+parse.float <- function(arg, name) {
+  ret = as.numeric(arg)
+  if (is.na(ret)) stop(paste("Unrecognized value of", name ,"parameter, floating-point number expected:", arg), call.=F)
+  return(ret)
+}
+#### Parse argument and check whether it is an integer
+parse.integer <- function(arg, name, zero=T, negative=zero) {
+  ret = as.integer(arg)
+  if (is.na(ret)) stop(paste("Unrecognized value of", name ,"parameter, integer expected:", arg), call.=F)
+  if (!zero && ret == 0) stop(paste("Value of", name ,"parameter cannot be zero:", arg), call.=F)
+  if (!negative && ret < 0) stop(paste("Value of", name ,"parameter cannot be negative:", arg), call.=F)
+  return(ret)
+}
+#### Split argument using a separator
+parse.list <- function(arg, sep, sub, name) {
+  if (length(arg) > 1) stop(paste("Unexpected error when parsing value of '", name ,"' parameter, arg should be a single string only: ", quote(arg)), call.=F)
+  ret = strsplit(arg, sep)[[1]]
+  if (grepl(sub, arg)) {
+    if (!all(grepl(sub, ret))) {
+      stop(paste("Invalid list format in parameter '", name ,"', some elements are named and some are unnamed: ", quote(arg)), call.=F)
+    }
+    tmp = strsplit(ret, sub)
+    ret = lapply(tmp, `[`, 2)
+    names(ret) <- sapply(tmp, `[`, 1)
+  }
+  return(ret)
+}
+#### Parse argument and check whether it is a valid type of correlation coefficient
+parse.correlation.method <- function(arg, name) {
+  arg = tolower(arg)
+  if        (arg=="pearson"  || arg=="p") { return("pearson")
+  } else if (arg=="spearman" || arg=="s") { return("spearman")
+  } else if (arg=="kendall"  || arg=="k") { return("kendall")
+  } else { stop(paste("Unrecognized value of", name, "parameter ('pearson', 'spearman', or 'kendall' expected):", arg), call.=F) }
+}
 
 #### Check whether an extension is supported
+supported.extension <- function(extension) {
+  return(any(extension == c("pdf","svg","png")))
+}
 check.extension <- function(extension) {
-  if (!any(extension == c("pdf","svg","png"))) {
+  if (!supported.extension(extension)) {
     stop(paste("Extension '",extension,"' is not supported, please use 'pdf' (default), 'svg', or 'png'"), call.=F)
+  }
+  return(extension)
+}
+get.extension <- function(filename) {
+  extension = tolower(tools::file_ext(filename))
+  if (nchar(extension) != 0 && supported.extension(extension)) {
+    return(extension)
+  } else {
+    return(NA)
   }
 }
 
@@ -124,4 +181,41 @@ check.installed <- function(...) {
                 "Please, install them first - e.g. 'install.packages(c(\"", paste0(not.installed, collapse='", "'),"\"))'."),
          call.=F)
   }
+}
+
+
+#### Construct filename based on
+is.defined <- function(x, default) {
+  tryCatch({x; return(T)},
+           error = function(e) {return(F)})
+}
+construct.filename <- function(output, extension, ...) {
+  if (!is.defined(output)) {
+    output = "."
+  }
+  if (dir.exists(output)) {
+    output = file.path(output, paste(tools::file_path_sans_ext(basename(c(...))), sep="-", collapse="-"))
+  }
+  if (is.defined(extension) && !is.na(extension)) {
+    if (!endsWith(output, paste0(".", extension))) {
+      output = paste(output, extension, sep=".")
+    }
+  } else {
+    extension = get.extension(output)
+    if (is.na(extension)) {
+      extension = "pdf"
+      output = paste(output, extension, sep=".")
+    }
+  }
+  return(list(filepath=output, extension=extension))
+}
+
+
+#### Read DESeq2 output file and repair its first header if missing
+read_deseq = function(path) {
+  file = read.csv(path, sep='\t')
+  if (colnames(file)[1] == "X") {
+    colnames(file)[1] = "gene_id"
+  }
+  return(file)
 }
