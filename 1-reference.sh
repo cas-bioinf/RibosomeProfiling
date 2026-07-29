@@ -20,7 +20,7 @@ elif [ $# -ne 1 ]; then
   exit;
 fi
 
-# Consistency with the variable name from '0-variables.sh' so that commands work even when using copy-paste
+# Consistency with the variable name from '0-variables.sh' so that commands work even if using copy-paste
 references="$( realpath "$1" )/"
 
 #### Genome
