@@ -13,6 +13,8 @@ elif [ $# -ne 1 ]; then
   echo "A script to install programs used during analysis and their prerequisities.";
   echo;
   echo "2-install.sh <location> [<fastqc_version>]	 Install used programs and their prerequisities; and save them to <location> if necessary. In the case of FastQC, version no. <fastqc_version> is used (${release_fastqc} by default).";
+  echo;
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-29; license: Apache License 2.0";
   exit;
 fi
 
