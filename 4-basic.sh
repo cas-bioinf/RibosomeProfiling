@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to make a basic processing of input files.                                                                  #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-31; license: Apache License 2.0             #
 ########################################################################################################################
 
 # Default values (used for the current experiment)
@@ -41,10 +41,10 @@ popd;
 options = "metadata"
 --------------------';
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-31; license: Apache License 2.0";
 }
 
-while [ $# -gt 2 ]; do
+while [ $# -gt 7 ]; do
   case $1 in
     -h* | --h* ) >&2 echo "Unexpected number of arguments: '$1'";
                  help;
@@ -59,8 +59,6 @@ while [ $# -gt 2 ]; do
     -t* | --t* ) shift;
                  threads="$1";
                  ;;
-    -w* | --w* ) wsl=1
-                 ;;
     * )          >&2 echo "Unknown argument: '$1'";
                  help;
                  exit 1;
@@ -68,13 +66,21 @@ while [ $# -gt 2 ]; do
   shift
 done
 
-if [ $# -eq 2 ]; then
+if [ $# -eq 7 ]; then
   # Consistency with the variable names from '0-variables.sh' so that commands work even if using copy-paste
   programs="$( realpath "$1" )/"
   references="$( realpath "$2" )/"
+  $input="$( realpath "$3" )/"
+  $input_big="$( realpath "$4" )/"
+  $output="$( realpath "$5" )/"
+  $output_big="$( realpath "$6" )/"
+  $logs="$( realpath "$7" )/"
 else
   if [ $# -eq 1 ] && ! [[ "$1" =~ '^-?-h' ]]; then
     >&2 echo "Unexpected argument: '$1'";
+    e=1
+  elif [ $# -gt 1 ]; then
+    >&2 echo "Missing $( echo "7-$#" | bc) argument$( [ $# -lt 6 ] && echo s )";
     e=1
   else
     e=0
