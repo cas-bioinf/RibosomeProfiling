@@ -9,7 +9,14 @@
 help() {
   echo "A script to initialize databases based on previously downloaded references.";
   echo;
-  echo "3-initialize.sh <programs> <references> [<ensembl_version> <MANE_version>]	 Initialize Bowtie2 rRNA and tRNA, and STAR genomic databases using reference files in <references> and programs stored in <programs>. Ensembl is used in version no. <ensembl_version> (${release_ensembl} by default), and MANE is used in version no. <MANE_version> (${release_mane} by default).";
+  echo "3-initialize.sh -h                                	   Prints this help.";
+  echo "3-initialize.sh [OPTIONS...] <programs> <references>	 Using programs installed globally (bowtie2-build and coreutils) and in <programs> (STAR and custom programs), initialize databases Bowtie2 rRNA and DNA, STAR and uORFdb databases in the <references> directory.";
+  echo;
+  echo "OPTIONS";
+  echo    "-e NUM\t Version of Ensembl to be used (${release_ensembl} by default).";
+  echo    "-m STR\t Version of MANE to be used (${release_mane} by default).";
+  echo -e "-o NUM\t The value for STAR's '--sjdbOverhang' argument. It should be -e \e[1mmax(ReadLength)-1\e[0m.";
+  echo    "-t NUM\t The number of threads to be used to generate the databases.";
   echo;
   echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0";
 }
