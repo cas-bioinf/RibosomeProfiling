@@ -6,6 +6,12 @@
 # Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0             #
 ########################################################################################################################
 
+# Default values (used for the current experiment)
+release_ensembl=115
+release_mane=1.4
+overlap=149
+threads=15
+
 help() {
   echo "A script to initialize databases based on previously downloaded references.";
   echo;
@@ -20,12 +26,6 @@ help() {
   echo;
   echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0";
 }
-
-# Default values (used for the current experiment)
-release_ensembl=115
-release_mane=1.4
-overlap=149
-threads=15
 
 while [ $# -gt 2 ]; do
   case $1 in
