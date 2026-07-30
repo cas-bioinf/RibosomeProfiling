@@ -10,7 +10,7 @@
 release_ensembl=115
 release_mane=1.4
 overlap=149
-threads=15
+threads=1
 
 help() {
   echo "A script to initialize databases based on previously downloaded references.";
