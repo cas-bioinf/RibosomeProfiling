@@ -1,5 +1,5 @@
 // Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)
-// Last update: 2026-07-28
+// Last update: 2026-08-13
 // Released under Apache License 2.0
 
 #include <vector>
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
     std::cout << "3. stop_codon is not considered to be a part of 3'UTR;\n";
     std::cout << "4. gene_id attribute is splitted into gene_id and gene_version, the same for transcript_id etc.;\n";
     std::cout << "5. 'gene_type' tag is replaced by 'gene_biotype', the same for 'transcript_type'.\n\n";
-<     std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-28; license: Apache License 2.0" << std::endl;
+    std::cout << "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-13; license: Apache License 2.0" << std::endl;
     return (argc == 1) ? 0 : 1;
   }
 
