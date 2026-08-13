@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to install programs used during analysis and their prerequisities.                                          #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-29; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-13; license: Apache License 2.0             #
 ########################################################################################################################
 
 release_fastqc=0.12.1
@@ -14,7 +14,7 @@ elif [ $# -ne 1 ]; then
   echo;
   echo "2-install.sh <location> [<fastqc_version>]	 Install used programs and their prerequisities; and save them to <location> if necessary. In the case of FastQC, version no. <fastqc_version> is used (${release_fastqc} by default).";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-29; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-13; license: Apache License 2.0";
   exit;
 fi
 
@@ -22,7 +22,7 @@ fi
 programs="$( realpath "$1" )/"
 
 # prerequisities
-sudo apt-get install parallel autoconf r-base libxml2-dev libcurl4-openssl-dev default-jre python3-pip libssl-dev
+sudo apt-get install parallel autoconf r-base libxml2-dev libcurl4-openssl-dev default-jre python3-pip libssl-dev pipx git
 
 mkdir -p "$programs"
 
@@ -57,7 +57,7 @@ popd
 echo "#### STAR ####"
 git clone https://github.com/alexdobin/STAR.git "${programs}STAR/"
 pushd "${programs}STAR/source/"
-make STAR
+make STAR -j1 # Bypassing a reported bug https://github.com/alexdobin/STAR/issues/2672 till the corrective pull request will be accepted
 popd
 
 # SAMtools
@@ -81,11 +81,11 @@ pipx install numpy HTSeq
 
 # Custom programs
 read -p 'Please download RibosomeProfiling repository, e.g. by: git clone https://github.com/cas-bioinf/RibosomeProfiling.git "${programs}RibosomeProfiling/"'
-g++ -O3 -o ${programs}mane2ensembl_gtf       "${programs}RibosomeProfiling/Cpp_source/mane2ensembl_gtf.cpp"
-g++ -O3 -o ${programs}filter_reverse_reads   "${programs}RibosomeProfiling/Cpp_source/filter_reverse_reads.cpp"
-g++ -O3 -o ${programs}filter_ambiguous_genes "${programs}RibosomeProfiling/Cpp_source/filter_ambiguous_genes.cpp"
-g++ -O3 -o ${programs}select_transcripts     "${programs}RibosomeProfiling/Cpp_source/select_transcripts.cpp"
-g++ -O3 -o ${programs}gc_content             "${programs}RibosomeProfiling/Cpp_source/gc_content.cpp"
+g++ -O3 -o ${programs}mane2ensembl_gtf       "${programs}RibosomeProfiling/Cpp_sources/mane2ensembl_gtf.cpp"
+g++ -O3 -o ${programs}filter_reverse_reads   "${programs}RibosomeProfiling/Cpp_sources/filter_reverse_reads.cpp"
+g++ -O3 -o ${programs}filter_ambiguous_genes "${programs}RibosomeProfiling/Cpp_sources/filter_ambiguous_genes.cpp"
+g++ -O3 -o ${programs}select_transcripts     "${programs}RibosomeProfiling/Cpp_sources/select_transcripts.cpp"
+g++ -O3 -o ${programs}gc_content             "${programs}RibosomeProfiling/Cpp_sources/gc_content.cpp"
 
 # R libraries
 sudo R -q -e 'install.packages(c("ggplot2","ggpointdensity","gplots","reshape2"))'
