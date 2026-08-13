@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to download reference data from source databases.                                                           #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-29; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-13; license: Apache License 2.0             #
 ########################################################################################################################
 
 release_ensembl=115
@@ -66,6 +66,6 @@ echo "Click on the download icon (to the right of View Downloads)."
 echo "Select 'FASTA' file type."
 echo "Select/ keep selected 'Sequence' type."
 echo "Select/ keep selected 'ID' or 'tRNA_ID' on the first position of Identifier Format."
-echo "Click on 'Confirm Download' and save the resulting file in ${references}."
+echo "Click on 'Confirm Download' and save the resulting file in ${references}tRNA/."
 echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 echo;
