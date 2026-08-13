@@ -22,7 +22,7 @@ fi
 programs="$( realpath "$1" )/"
 
 # prerequisities
-sudo apt-get install parallel autoconf r-base libxml2-dev libcurl4-openssl-dev default-jre python3-pip libssl-dev pipx git
+sudo apt-get install parallel autoconf r-base libxml2-dev libcurl4-openssl-dev default-jre python3-pip libssl-dev pipx git xxd
 
 mkdir -p "$programs"
 
