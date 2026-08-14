@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to install programs used during analysis and their prerequisities.                                          #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-13; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-14; license: Apache License 2.0             #
 ########################################################################################################################
 
 release_fastqc=0.12.1
@@ -12,9 +12,9 @@ if [ $# -eq 2 ]; then
 elif [ $# -ne 1 ]; then
   echo "A script to install programs used during analysis and their prerequisities.";
   echo;
-  echo "2-install.sh <location> [<fastqc_version>]	 Install used programs and their prerequisities; and save them to <location> if necessary. In the case of FastQC, version no. <fastqc_version> is used (${release_fastqc} by default).";
+  echo "2-install.sh <location> [<fastqc_version>]     Install used programs and their prerequisities; and save them to <location> if necessary. In the case of FastQC, version no. <fastqc_version> is used (${release_fastqc} by default).";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-13; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-14; license: Apache License 2.0";
   exit;
 fi
 
@@ -22,7 +22,8 @@ fi
 programs="$( realpath "$1" )/"
 
 # prerequisities
-sudo apt-get install parallel autoconf r-base libxml2-dev libcurl4-openssl-dev default-jre python3-pip libssl-dev pipx git xxd
+sudo apt-get install autoconf default-jre g++ gawk git libbz2-dev libcurl4-openssl-dev liblzma-dev libncurses5-dev make pipx python3-dev r-base xxd
+# parallel libxml2-dev python3-pip libssl-dev
 
 mkdir -p "$programs"
 
@@ -31,7 +32,7 @@ echo "#### FastQC ####"
 # sudo apt-get install fastqc # manual installation is better as it provides a newer version
 file=fastqc_v${release_fastqc}.zip
 wget -P "${programs}" "https://www.bioinformatics.babraham.ac.uk/projects/fastqc/$file"
-unzip -X "${programs}$file" -d "${programs}"
+unzip "${programs}$file" -d "${programs}"
 rm "${programs}$file"
 chmod 755 "${programs}FastQC/fastqc"
 
@@ -80,7 +81,7 @@ echo "#### HTSeq ####"
 pipx install numpy HTSeq
 
 # Custom programs
-read -p 'Please download RibosomeProfiling repository, e.g. by: git clone https://github.com/cas-bioinf/RibosomeProfiling.git "${programs}RibosomeProfiling/"'
+git clone https://github.com/cas-bioinf/RibosomeProfiling.git "${programs}RibosomeProfiling/"
 g++ -O3 -o ${programs}mane2ensembl_gtf       "${programs}RibosomeProfiling/Cpp_sources/mane2ensembl_gtf.cpp"
 g++ -O3 -o ${programs}filter_reverse_reads   "${programs}RibosomeProfiling/Cpp_sources/filter_reverse_reads.cpp"
 g++ -O3 -o ${programs}filter_ambiguous_genes "${programs}RibosomeProfiling/Cpp_sources/filter_ambiguous_genes.cpp"
@@ -89,6 +90,8 @@ g++ -O3 -o ${programs}gc_content             "${programs}RibosomeProfiling/Cpp_s
 
 # R libraries
 sudo R -q -e 'install.packages(c("ggplot2","ggpointdensity","gplots","reshape2"))'
+
+pipx ensurepath
 
 # Print versions of all installed programs
 echo "Installation completed. Installed versions are:";
