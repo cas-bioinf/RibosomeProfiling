@@ -7,8 +7,9 @@
 ########################################################################################################################
 
 # Default values (used for the current experiment)
-default_ensembl='${references}genome/ensembl/Homo_sapiens.GRCh38.115.gtf'
-default_mane='${references}genome/ensembl/MANE.GRCh38.v1.4.ensembl_genomic-select-ensembl.gtf'
+default_references='${references}'
+default_ensembl="${default_references}genome/ensembl/Homo_sapiens.GRCh38.115.gtf"
+default_mane="${default_references}genome/ensembl/MANE.GRCh38.v1.4.ensembl_genomic-select-ensembl.gtf"
 threads=1
 
 help() {
@@ -90,8 +91,8 @@ else
 fi
 
 # Default values (used for the current experiment)
-: ${ensembl:=${default_ensembl/\${references}/$references}}
-: ${mane:=${default_mane/\${references}/$references}}
+: ${ensembl:=${default_ensembl/$default_references/$references}}
+: ${mane:=${default_mane/$default_references/$references}}
 
 mkdir -p "$input" "$logs"
 
