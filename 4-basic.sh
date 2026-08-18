@@ -3,12 +3,12 @@
 ########################################################################################################################
 # A script to make a basic processing of input files.                                                                  #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-17; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0             #
 ########################################################################################################################
 
 # Default values (used for the current experiment)
-ensembl=${references}genome/ensembl/Homo_sapiens.GRCh38.115.gtf
-mane="${references}genome/ensembl/MANE.GRCh38.v1.4.ensembl_genomic-select-ensembl.gtf"
+default_ensembl='${references}genome/ensembl/Homo_sapiens.GRCh38.115.gtf'
+default_mane='${references}genome/ensembl/MANE.GRCh38.v1.4.ensembl_genomic-select-ensembl.gtf'
 threads=1
 
 help() {
@@ -22,9 +22,9 @@ help() {
   echo "4-basic.sh [OPTIONS...] <programs> <references> <input> <input_big> <output> <output_big> <logs>  Using programs installed globally (cutadapt, bowtie2, samtools, HTSeq-count and coreutils) and in <programs> (FastQC, STAR and custom programs), and using databases installed in <references> process all '*_R1*.*.gz' files from <input_big>. The files should be in the fastq format. The files will be temporally copied into <input> directory. Output files will be in <output> and intermediate files will be preserved in <output_big>, each file will have its own subdirectory named after its name without extension. Logs will be stored in <logs> directory. This structure was chosen because it allows you to have large files on a slow but large HDD and process them on a small but fast SSD";
   echo;
   echo "OPTIONS";
-  echo    "-e NUM\t Path to the Ensembl annotations in GTF format to be used ('${ensembl}' by default).";
-  echo    "-m STR\t Path to the MANE annotations in GTF format to be used ('${mane}' by default).";
-  echo    "-t NUM\t The number of threads to be used to generate the databases.";
+  echo -e "-e NUM\t Path to the Ensembl annotations in GTF format to be used ('${default_ensembl}' by default).";
+  echo -e "-m STR\t Path to the MANE annotations in GTF format to be used ('${default_mane}' by default).";
+  echo -e "-t NUM\t The number of threads to be used to generate the databases.";
   echo;
   echo "REMARKS";
   echo "If you got 'Exiting because of FATAL ERROR: could not create FIFO file...' error, you run the script on a disc without named pipes allowed (it is usual in the Windows WSL). In such case, you must enable them first using the following commands (move out of the current disc; unmount the disc; remount it with named pipes allowed; return back):";
@@ -41,7 +41,7 @@ popd;
 options = "metadata"
 --------------------';
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-17; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0";
 }
 
 while [ $# -gt 7 ]; do
@@ -88,6 +88,10 @@ else
   help;
   exit "$e";
 fi
+
+# Default values (used for the current experiment)
+: ${ensembl:=${default_ensembl/\${references}/$references}}
+: ${mane:=${default_mane/\${references}/$references}}
 
 mkdir -p "$input" "$logs"
 
