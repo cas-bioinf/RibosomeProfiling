@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to initialize databases based on previously downloaded references.                                          #
 #                                                                                                                      #
-# Created by Jan JelĂ­nek (jan.jelinek@biomed.cas.cz); last update: 2026-08-11; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0             #
 ########################################################################################################################
 
 # Default values (used for the current experiment)
@@ -18,45 +18,15 @@ help() {
   echo "5-differential_expression.sh -h                                               	   Prints this help.";
   echo "5-differential_expression.sh [OPTIONS...] <programs> <references> <output> <logs>	 Using programs installed globally (bowtie2-build and coreutils) and in <programs> (STAR and custom programs), initialize databases Bowtie2 rRNA and DNA, STAR and uORFdb databases in the <references> directory.";
   echo;
-  echo "OPTIONS";
-  echo    "-e NUM\t Version of Ensembl to be used (${release_ensembl} by default).";
-  echo    "-m STR\t Version of MANE to be used (${release_mane} by default).";
-  echo -e "-o NUM\t The value for STAR's '--sjdbOverhang' argument. It should be -e \e[1mmax(ReadLength)-1\e[0m.";
-  echo    "-t NUM\t The number of threads to be used to generate the databases.";
-  echo;
-  echo "Created by Jan JelĂ­nek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0";
 }
 
-while [ $# -gt 4 ]; do
-  case $1 in
-    -h* | --h* ) >&2 echo "Unexpected number of arguments: '$1'";
-                 help;
-                 exit 1;
-                 ;;
-    -e* | --e* ) shift;
-                 release_ensembl="$1";
-                 ;;
-    -m* | --m* ) shift;
-                 release_mane="$1";
-                 ;;
-    -o* | --o* ) shift;
-                 overlap="$1";
-                 ;;
-    -t* | --t* ) shift;
-                 threads="$1";
-                 ;;
-    * )          >&2 echo "Unknown argument: '$1'";
-                 help;
-                 exit 1;
-  esac
-  shift
-done
 if [ $# -eq 4 ]; then
   # Consistency with the variable names from '0-variables.sh' so that commands work even if using copy-paste
   programs="$( realpath "$1" )/"
   references="$( realpath "$2" )/"
-  $output="$( realpath "$3" )/"
-  $logs="$( realpath "$4" )/"
+  output="$( realpath "$3" )/"
+  logs="$( realpath "$4" )/"
 else
   if [ $# -eq 1 ] && ! [[ "$1" =~ '^-?-h' ]]; then
     >&2 echo "Unexpected argument: '$1'";
