@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to initialize databases based on previously downloaded references.                                          #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-14; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0             #
 ########################################################################################################################
 
 # Default values (used for the current experiment)
@@ -19,12 +19,12 @@ help() {
   echo "3-initialize.sh [OPTIONS...] <programs> <references>	 Using programs installed globally (bowtie2-build and coreutils) and in <programs> (STAR and custom programs), initialize databases Bowtie2 rRNA and DNA, STAR and uORFdb databases in the <references> directory.";
   echo;
   echo "OPTIONS";
-  echo    "-e NUM\t Version of Ensembl to be used (${release_ensembl} by default).";
-  echo    "-m STR\t Version of MANE to be used (${release_mane} by default).";
+  echo -e "-e NUM\t Version of Ensembl to be used (${release_ensembl} by default).";
+  echo -e "-m STR\t Version of MANE to be used (${release_mane} by default).";
   echo -e "-o NUM\t The value for STAR's '--sjdbOverhang' argument. It should be -e \e[1mmax(ReadLength)-1\e[0m.";
-  echo    "-t NUM\t The number of threads to be used to generate the databases.";
+  echo -e "-t NUM\t The number of threads to be used to generate the databases.";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-14; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0";
 }
 
 while [ $# -gt 2 ]; do
