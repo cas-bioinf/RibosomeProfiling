@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to make a basic processing of input files.                                                                  #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-19; license: Apache License 2.0             #
 ########################################################################################################################
 
 # Default values (used for the current experiment)
@@ -42,7 +42,7 @@ popd;
 options = "metadata"
 --------------------';
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-19; license: Apache License 2.0";
 }
 
 while [ $# -gt 7 ]; do
@@ -149,7 +149,7 @@ for file in ${input_big}*_R1*.*.gz; do
 
   # Preserve only alignments to MANE transcripts
   id_mane=${id_unique}-mane;
-  { "${programs}select_transcripts" <( grep -o 'transcript_id "[^"]*";' "$mane" | cut -d'"' -f2 | sort -u ) <( samtools view -h "${output_big}$id/${id_unique}.bam" ) /dev/fd/3; } 3>&1 >"${logs}select_transcripts.${id_mane}.out" 2>"${logs}select_transcripts.${id_mane}.err" | samtools view -h -o "${output}$id/${id_mane}.bam" -;
+  { "${programs}select_transcripts" <( grep -o 'transcript_id "[^"]*";' "$mane" | cut -d'"' -f2 | sort -u ) <( samtools view -h "${output}$id/${id_unique}.bam" ) /dev/fd/3; } 3>&1 >"${logs}select_transcripts.${id_mane}.out" 2>"${logs}select_transcripts.${id_mane}.err" | samtools view -h -o "${output}$id/${id_mane}.bam" -;
   mv "${output}$id/${id_unique}.bam" "${output_big}$id/"&
   "${programs}FastQC/fastqc" -t $threads -o "${output}$id/" "${output}$id/${id_mane}.bam" >"${logs}FastQC.${id_mane}.out" 2>"${logs}FastQC.${id_mane}.err";
 
