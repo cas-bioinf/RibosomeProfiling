@@ -86,6 +86,7 @@ g++ -O3 -o ${programs}mane2ensembl_gtf       "${programs}RibosomeProfiling/Cpp_s
 g++ -O3 -o ${programs}filter_reverse_reads   "${programs}RibosomeProfiling/Cpp_sources/filter_reverse_reads.cpp"
 g++ -O3 -o ${programs}filter_ambiguous_genes "${programs}RibosomeProfiling/Cpp_sources/filter_ambiguous_genes.cpp"
 g++ -O3 -o ${programs}select_transcripts     "${programs}RibosomeProfiling/Cpp_sources/select_transcripts.cpp"
+g++ -O3 -o ${programs}select_features        "${programs}RibosomeProfiling/Cpp_sources/select_features.cpp"
 g++ -O3 -o ${programs}gc_content             "${programs}RibosomeProfiling/Cpp_sources/gc_content.cpp"
 
 # R libraries
@@ -102,8 +103,9 @@ bowtie2 --version | head -n1
 echo "STAR $( "${programs}STAR/source/STAR" --version )"
 samtools --version | head -n2 | paste -sd' '
 echo "htseq-count $( htseq-count --version )"
-echo "mane2ensembl_gtf$( ${programs}mane2ensembl_gtf | tail -n1 | cut -d';' -f2 )"
-echo "filter_reverse_reads$( ${programs}filter_reverse_reads | tail -n1 | cut -d';' -f2 )"
+echo "mane2ensembl_gtf$(       ${programs}mane2ensembl_gtf       | tail -n1 | cut -d';' -f2 )"
+echo "filter_reverse_reads$(   ${programs}filter_reverse_reads   | tail -n1 | cut -d';' -f2 )"
 echo "filter_ambiguous_genes$( ${programs}filter_ambiguous_genes | tail -n1 | cut -d';' -f2 )"
-echo "select_transcripts$( ${programs}select_transcripts | tail -n1 | cut -d';' -f2 )"
-echo "gc_content$( ${programs}gc_content | tail -n1 | cut -d';' -f2 )"
+echo "select_transcripts$(     ${programs}select_transcripts     | tail -n1 | cut -d';' -f2 )"
+echo "select_features$(        ${programs}select_featuress       | tail -n1 | cut -d';' -f2 )"
+echo "gc_content$(             ${programs}gc_content             | tail -n1 | cut -d';' -f2 )"
