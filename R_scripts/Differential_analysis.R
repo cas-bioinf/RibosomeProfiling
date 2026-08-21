@@ -10,7 +10,7 @@
 ## RNA-seq data with DESeq2.                                                  ##
 ##                                                                            ##
 ## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2024-07-25                                                    ##
+## Last update: 2026-08-21                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -102,7 +102,7 @@ countsPath = args[2]
 
 #### External libraries
 # Check whether all used libraries are installed
-check.installed("biomaRt", "DESeq2", "dbplyr", "dplyr", "ggplot2", "gplots", "ggrepel", "RColorBrewer", "RSQLite", "tools", "xml2")
+check.installed("biomaRt", "DESeq2", "dbplyr", "dplyr", "ggplot2", "gplots", "ggrepel", "RColorBrewer", "RSQLite", "SummarizedExperiment", "tools", "xml2")
 # Load intensively used libraries
 library(DESeq2)
 library(ggplot2)
