@@ -22,8 +22,8 @@ fi
 programs="$( realpath "$1" )/"
 
 # prerequisities
-sudo apt-get install autoconf default-jre g++ gawk git libbz2-dev libcurl4-openssl-dev liblzma-dev libncurses5-dev make pipx python3-dev r-base xxd
-# parallel libxml2-dev python3-pip libssl-dev
+sudo apt-get install autoconf default-jre g++ gawk git libbz2-dev libcurl4-openssl-dev liblzma-dev libncurses5-dev libxml2-dev make pipx python3-dev r-base xxd
+# parallel python3-pip libssl-dev
 
 mkdir -p "$programs"
 
@@ -82,6 +82,7 @@ pipx install numpy HTSeq
 
 # Custom programs
 git clone https://github.com/cas-bioinf/RibosomeProfiling.git "${programs}RibosomeProfiling/"
+chmod u+x ${programs}RibosomeProfiling/[1-5]-*.sh ${programs}RibosomeProfiling/R_scripts/Differential_analysis.R
 g++ -O3 -o ${programs}mane2ensembl_gtf       "${programs}RibosomeProfiling/Cpp_sources/mane2ensembl_gtf.cpp"
 g++ -O3 -o ${programs}filter_reverse_reads   "${programs}RibosomeProfiling/Cpp_sources/filter_reverse_reads.cpp"
 g++ -O3 -o ${programs}filter_ambiguous_genes "${programs}RibosomeProfiling/Cpp_sources/filter_ambiguous_genes.cpp"
@@ -90,7 +91,7 @@ g++ -O3 -o ${programs}select_features        "${programs}RibosomeProfiling/Cpp_s
 g++ -O3 -o ${programs}gc_content             "${programs}RibosomeProfiling/Cpp_sources/gc_content.cpp"
 
 # R libraries
-sudo R -q -e 'install.packages(c("ggplot2","ggpointdensity","gplots","reshape2"))'
+sudo R -q -e 'install.packages(c("BiocManager","dbplyr","dplyr","ggplot2","ggpointdensity","ggrepel","RSQLite","gplots","reshape2","xml2)); BiocManager::install(c("biomaRt","DESeq2","SummarizedExperiment"))'
 
 pipx ensurepath
 
