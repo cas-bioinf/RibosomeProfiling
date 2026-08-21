@@ -1,32 +1,24 @@
 #!/bin/bash
 
 ########################################################################################################################
-# A script to initialize databases based on previously downloaded references.                                          #
+# A script to perform differential expression analysis.                                                                #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-18; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-21; license: Apache License 2.0             #
 ########################################################################################################################
 
-# Default values (used for the current experiment)
-release_ensembl=115
-release_mane=1.4
-overlap=149
-threads=1
-
 help() {
-  echo "A script to initialize databases based on previously downloaded references.";
+  echo "A script to perform differential expression analysis.";
   echo;
-  echo "5-differential_expression.sh -h                                               	   Prints this help.";
-  echo "5-differential_expression.sh [OPTIONS...] <programs> <references> <output> <logs>	 Using programs installed globally (bowtie2-build and coreutils) and in <programs> (STAR and custom programs), initialize databases Bowtie2 rRNA and DNA, STAR and uORFdb databases in the <references> directory.";
+  echo "5-differential_expression.sh -h                 	 Prints this help.";
+  echo "5-differential_expression.sh <programs> <output>	 Using custom scripts, performs differential expression analysis.";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-07-30; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-21; license: Apache License 2.0";
 }
 
-if [ $# -eq 4 ]; then
+if [ $# -eq 2 ]; then
   # Consistency with the variable names from '0-variables.sh' so that commands work even if using copy-paste
   programs="$( realpath "$1" )/"
-  references="$( realpath "$2" )/"
-  output="$( realpath "$3" )/"
-  logs="$( realpath "$4" )/"
+  output="$( realpath "$2" )/"
 else
   if [ $# -eq 1 ] && ! [[ "$1" =~ '^-?-h' ]]; then
     >&2 echo "Unexpected argument: '$1'";
@@ -41,13 +33,14 @@ else
   exit "$e";
 fi
 
+shopt -s extglob
 
 # Create table with gene counts
 mkdir -p ${output}_deseq/
 table=${output}_deseq/r01M1_sE-Ensembl-CDS.tsv;
 i=0;
 >${table}.$i;
-for file in ${output}*_R1*/{,*[-_]}{FP,mRNA}[-_]*_CDS.tsv; do
+for file in ${output}*_R1*/!(*[^-_]){FP,mRNA}[-_]*_CDS.tsv; do
   j=$(($i+1));
   join -t$'\t' -a1 -a2 -e0 -o auto ${table}.$i <( echo -ne 'gene\t'; basename ${file%_R1[_-]*} | awk -F'[-_]' 'BEGIN{OFS="_"} $0~/^S25-075/{ print $3, "HEK", substr($4,1,2)=="WT" ? $3== "FP" ? "WT" : "wt" : "Triple", substr($4,length($4),1); next} $0~/^(c|nt)_[1-4]_mRNA$/{ print "mRNA", $1 == "nt" ? $1 : "eIF3cKD", $2; next} $0~/^mRNA_nt_1$/{ print "mRNA_nt_5"; next} $0~/^KP3_mRNA_nt_2$/{ print "mRNA_nt_6"; next} $0~/^KP3_FP_c_4$/{ print "FP_eIF3cKD_1"; next} $0~/^FP_c[5-7]$/{ print "FP_eIF3cKD", substr($2,2)-3; next} $0~/^FP_nt_1$/{ print "FP_nt_1"; next} $0~/^KP[23]_FP_nt_[24]$/{ print "FP_nt", $4/2+1; next} $0~/^FP_nt_5[5-7]$/{ print "FP_nt", $3-51; next} {print "Unexpected line: " $0 > "/dev/stderr"}'; head -n -5 $file ) >${table}.$j;
   rm ${table}.$i;
