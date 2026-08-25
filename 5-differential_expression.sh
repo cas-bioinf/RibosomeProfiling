@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to perform differential expression analysis.                                                                #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-21; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-25; license: Apache License 2.0             #
 ########################################################################################################################
 
 help() {
@@ -12,7 +12,7 @@ help() {
   echo "5-differential_expression.sh -h                 	 Prints this help.";
   echo "5-differential_expression.sh <programs> <output>	 Using custom scripts, performs differential expression analysis.";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-21; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-25; license: Apache License 2.0";
 }
 
 if [ $# -eq 2 ]; then
@@ -50,9 +50,10 @@ mv ${table}.$i ${table};
 
 
 # Create design tables
-cat ${output}_deseq/*.tsv | head -n1 | cut -f2- | tr '\t' '\n' | sort | awk -F'_' 'BEGIN{OFS="\t"; print "","assay","siRNA","id"} $2=="HEK"{print $0,$1,$3=="wt"?toupper($3):$3, $4; next} {print $0,$1,$2,$3}' >${output}_deseq/design-all.tbl
+head -n1 "$table" | cut -f2- | tr '\t' '\n' | sort | awk -F'_' 'BEGIN{OFS="\t"; print "","assay","siRNA","id"} $2=="HEK"{print $0,$1,$3=="wt"?toupper($3):$3, $4; next} {print $0,$1,$2,$3}' >${output}_deseq/design-all.tbl
 grep -v '_HEK_' ${output}_deseq/design-all.tbl >${output}_deseq/design-eIF3cKD.tbl
 sed '1p;/_HEK_/!d' ${output}_deseq/design-all.tbl >${output}_deseq/design-eIF3cKI.tbl
+rm ${output}_deseq/design-all.tbl
 
 # Differential expression etc.
 for design in ${output}_deseq/design-*.tbl; do
@@ -80,6 +81,6 @@ for dir in ${output}_deseq/*/; do
 done;
 
 # translation only
-for file in ${output}_deseq/*/sig0.05-TE-?_vs_!(*[-_]*).tbl; do
+for file in ${output}_deseq/*/sig0.05-TE-!(*[-_]*)_vs_!(*[-_]*).tbl; do
   awk 'BEGIN{FS=OFS="\t"} NR==FNR{a[$1]++;next} FNR==1{print;next} !a[$1]' ${file/_TE_/_mRNA_} $file >${file%.tbl}-translation_only.tbl;
 done;
