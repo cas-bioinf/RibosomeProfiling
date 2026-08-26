@@ -10,7 +10,7 @@
 ## RNA-seq data with DESeq2.                                                  ##
 ##                                                                            ##
 ## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2026-08-21                                                    ##
+## Last update: 2026-08-26                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -52,6 +52,8 @@ help <- function(error = c()) {
                 "                                                     sample identifier).",
                 "",
                 "Options:",
+                "  --host <url>                 Host to use to download annotations. Empty string means the default server.",
+                "                               For more details, see biomaRt::useEnsembl.",
                 "  --img {pdf|svg|png}          What file format (and extension) to use to save the plots.",
                 "                               Pdf is used by default.",
                 "  --output <dirname>           Directory where to save result. If not specified, <counts> filename without",
@@ -92,7 +94,9 @@ for (i in seq(3, length(args), by=2)) {
     # Reference level for the second column
     "--reference2"={ reference2=args[i+1] },
     # Whether BioMart cache should be used (it does not works in some combinations of installed packages)
-    "--use_bm_cache"={ useBMcache = parse.boolean(args[i+1], args[i]) }
+    "--use_bm_cache"={ useBMcache = parse.boolean(args[i+1], args[i]) },
+    # Host to download annotations
+    "--host"={ host=args[i+1] }
   )
 }
 # Assign mandatory arguments for easier changes
@@ -141,6 +145,9 @@ if (!exists("reference2", inherits=F)) {
 }
 if (!exists("useBMcache", inherits=F)) {
   useBMcache = FALSE
+}
+if (!exists("host", inherits=F) || host == "") {
+  host = NULL
 }
 
 
@@ -200,9 +207,11 @@ for (assay in unique(designTable$assay)) {
 
 #### Create results tables and show summaries
 # Download annotations from biomaRt
+mart.args = list(biomart="genes", dataset="hsapiens_gene_ensembl")
+if (!is.null(host)) mart.args$host <- host
 annotations = biomaRt::getBM(attributes=unique(c(filter,c("ensembl_gene_id","entrezgene_id","hgnc_symbol","go_id","name_1006"))),
                              filters=filter, values=rownames(countsTable),
-                             mart=biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl"), useCache=useBMcache)
+                             mart=do.call(biomaRt::useEnsembl, mart.args), useCache=useBMcache)
 # Aggregate sorted unique non-empty values for each id
 annotations = aggregate(annotations[, colnames(annotations)[colnames(annotations) != filter]], annotations[filter],
                         function(x) paste(sort(unique(x[nzchar(x)])), collapse="; "))
