@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to install programs used during analysis and their prerequisities.                                          #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-14; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-31; license: Apache License 2.0             #
 ########################################################################################################################
 
 release_fastqc=0.12.1
@@ -14,7 +14,7 @@ elif [ $# -ne 1 ]; then
   echo;
   echo "2-install.sh <location> [<fastqc_version>]     Install used programs and their prerequisities; and save them to <location> if necessary. In the case of FastQC, version no. <fastqc_version> is used (${release_fastqc} by default).";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-14; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-31; license: Apache License 2.0";
   exit;
 fi
 
@@ -91,7 +91,7 @@ g++ -O3 -o ${programs}select_features        "${programs}RibosomeProfiling/Cpp_s
 g++ -O3 -o ${programs}gc_content             "${programs}RibosomeProfiling/Cpp_sources/gc_content.cpp"
 
 # R libraries
-sudo R -q -e 'install.packages(c("BiocManager","dbplyr","dplyr","ggplot2","ggpointdensity","ggrepel","RSQLite","gplots","reshape2","xml2)); BiocManager::install(c("biomaRt","DESeq2","SummarizedExperiment"))'
+sudo R -q -e 'install.packages(c("BiocManager","dbplyr","dplyr","ggplot2","ggpointdensity","ggrepel","RSQLite","gplots","reshape2","xml2")); BiocManager::install(c("biomaRt","DESeq2","SummarizedExperiment"))'
 
 pipx ensurepath
 
