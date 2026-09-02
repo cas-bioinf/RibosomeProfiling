@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to make a basic processing of input files.                                                                  #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-19; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-02; license: Apache License 2.0             #
 ########################################################################################################################
 
 # Default values (used for the current experiment)
@@ -42,7 +42,7 @@ popd;
 options = "metadata"
 --------------------';
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-19; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-02; license: Apache License 2.0";
 }
 
 while [ $# -gt 7 ]; do
@@ -108,8 +108,8 @@ for file in ${input_big}*_R1*.*.gz; do
   "${programs}FastQC/fastqc" -t $threads -o "${output}$id/" "$input_file" >"${logs}FastQC.${id}.out" 2>"${logs}FastQC.${id}.err";
 
   # Cutadapt
-  id_trimmed="${id}-u3a10m15t";
-  cutadapt -u 3 -a AAAAAAAAAA -m 15 $( [[ "${id^^}" == *FP* ]] && [[ "$id" != S25-075-* ]] && echo "-M 45" ) -j $threads --trim-n --trimmed-only -o "${output}$id/${id_trimmed}.fastq.gz" "$input_file" >"${logs}cutadapt.${id_trimmed}.out" 2>"${logs}cutadapt.${id_trimmed}.err";
+  id_trimmed="${id}-u3a10m15$( [[ "${id^^}" == *FP* ]] && [[ "$id" != S25-075-* ]] && echo "M45" )t";
+  cutadapt -u 3 -a AAAAAAAAAA -m 15 $( [[ "$id_trimmed" == *M45t ]] && echo "-M 45" ) -j $threads --trim-n --trimmed-only -o "${output}$id/${id_trimmed}.fastq.gz" "$input_file" >"${logs}cutadapt.${id_trimmed}.out" 2>"${logs}cutadapt.${id_trimmed}.err";
   rm "$input_file" &
   "${programs}FastQC/fastqc" -t $threads -o "${output}$id/" "${output}$id/${id_trimmed}.fastq.gz" >"${logs}FastQC.${id_trimmed}.out" 2>"${logs}FastQC.${id_trimmed}.err";
 
