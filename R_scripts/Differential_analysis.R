@@ -208,7 +208,7 @@ plotDispEsts(data, ylim=c(1e-5, 1e1))
 dev.off()
 ## Visualize sample distances
 # pdf method uses 'file', while png and svg use 'filename', but both are as the first argument
-heatmapArgs[[names(formals(save))[1]]] = paste("sample_distance-heatmap",extension, sep=".")
+heatmapArgs[[names(formals(extension))[1]]] = paste("sample_distance-heatmap",extension, sep=".")
 # To do not duplicate the call based on whether size is, or is not specified
 do.call(extension, heatmapArgs)
 gplots::heatmap.2(as.matrix(dist(t(assay(data.transformed)))), trace="none", col=colorRampPalette(rev(RColorBrewer::brewer.pal(9, "Blues")))(255))
