@@ -10,7 +10,7 @@
 ## RNA-seq data with DESeq2.                                                  ##
 ##                                                                            ##
 ## Created by Jan Jelínek (jan.jelinek@biomed.cas.cz)                         ##
-## Last update: 2026-08-26                                                    ##
+## Last update: 2026-09-02                                                    ##
 ## Released under Apache License 2.0                                          ##
 ################################################################################
 
@@ -52,6 +52,12 @@ help <- function(error = c()) {
                 "                                                     sample identifier).",
                 "",
                 "Options:",
+                "  --filter <filter>            An attribute name that should be used to pair rownames from <counts> with",
+                "                               biomaRt records. If not specified, 'ensembl_gene_id' is used by default.",
+                "  --full {TRUE|FALSE}          Whether a full analysis should be done, or whether to perform initial checks",
+                "                               only. Full analysis is performed by default.",
+                "  --heatmap_size <size>        Width and height of the sample_distance-heatmap plot. For the default value,",
+                "                               check the selected file format (e.g. ?pdf).",
                 "  --host <url>                 Host to use to download annotations. Empty string means the default server.",
                 "                               For more details, see biomaRt::useEnsembl.",
                 "  --img {pdf|svg|png}          What file format (and extension) to use to save the plots.",
@@ -61,13 +67,14 @@ help <- function(error = c()) {
                 "                               will be created.",
                 "  --padj <threshold>           Space-separated thresholds on p_adj to be considered as significantly changed.",
                 "                               The default threshold is 0.05.",
+                "  --pca_colours <colours>      Overwrite the default colours used in PCA plots with comma-separated list of",
+                "                               colours <colours>. Note, that the plots can be slightly different, as the used",
+                "                               method does not allow changing colors, so the plots must be created manually.",
                 "  --pca_ids {TRUE|FALSE}       Whether to show sample identifiers in PCA plots. They are not shown by default.",
                 "  --reference1 <reference>     Specify reference level for the first column. 'mRNA' is used by default.",
                 "  --reference2 <reference>     Specify reference level for the second column. 'nt' is used by default.",
-                "  --filter <filter>            An attribute name that should be used to pair rownames from <counts> with",
-                "                               biomaRt records. If not specified, 'ensembl_gene_id' is used by default.",
-                "  --use_bm_cache {TRUE|FALSE}  Whether to use cache when querying biomaRt. Cache is not use by default (it",
-                "                               makes a problem in some older versions of R."),
+                "  --use_bm_cache {TRUE|FALSE}  Whether to use cache when querying biomaRt. The cache is not used by default",
+                "                               (it makes a problem in some older versions of R."),
               error)
 }
 
@@ -79,24 +86,30 @@ check.parity(args, even=T)
 # Parse optional arguments
 for (i in seq(3, length(args), by=2)) {
   switch(args[i],
-    # Directory where to store results (will be created)
-    "--output"={ workingDir=args[i+1] },
-    # Plots file format (supported are pdf, svg and png
-    "--img"={ extension=check.extension(args[i+1]) },
-    # Threshold on p_adjusted value to consider a gene as significantly differentially expressed
-    "--padj"={ padjs = as.double(unlist(strsplit(args[i+1], split=" "))) },
-    # Whether PCA plots should contain sample identifiers
-    "--pca_ids"={ pcaIds = parse.boolean(args[i+1], args[i]) },
     # What identifier is used to match with BioMart
     "--filter"={ filter=args[i+1] },
+    # Whether to perform a full analysis
+    "--full"={ full = parse.boolean(args[i+1], args[i]) },
+    # Set size of the heatmap
+    "--heatmap_size"={ heatmapSize = parse.integer(args[i+1], args[i], zero=F, negative=F) },
+    # Host to download annotations
+    "--host"={ host=args[i+1] },
+    # Plots file format (supported are pdf, svg and png
+    "--img"={ extension=check.extension(args[i+1]) },
+    # Directory where to store results (will be created)
+    "--output"={ workingDir=args[i+1] },
+    # Threshold on p_adjusted value to consider a gene as significantly differentially expressed
+    "--padj"={ padjs = as.double(unlist(strsplit(args[i+1], split=" "))) },
+    # Override colours ised in PCA polots
+    "--pca_colours"={ pcaColours = parse.list(args[i+1], ',', '=', args[i]) },
+    # Whether PCA plots should contain sample identifiers
+    "--pca_ids"={ pcaIds = parse.boolean(args[i+1], args[i]) },
     # Reference level for the first column
     "--reference1"={ reference1=args[i+1] },
     # Reference level for the second column
     "--reference2"={ reference2=args[i+1] },
     # Whether BioMart cache should be used (it does not works in some combinations of installed packages)
-    "--use_bm_cache"={ useBMcache = parse.boolean(args[i+1], args[i]) },
-    # Host to download annotations
-    "--host"={ host=args[i+1] }
+    "--use_bm_cache"={ useBMcache = parse.boolean(args[i+1], args[i]) }
   )
 }
 # Assign mandatory arguments for easier changes
@@ -127,15 +140,31 @@ if (! exists("workingDir", inherits=F)) {
 }
 if (!exists("extension", inherits=F)) {
   extension = "pdf"
+} else {
+  check.extension(extension)
+}
+if (!exists("filter", inherits=F)) {
+  filter = "ensembl_gene_id"
+}
+if (!exists("full", inherits=F)) {
+  full = TRUE
+}
+heatmapArgs = list()
+if (exists("heatmapSize", inherits=F)) {
+  heatmapArgs$width  = heatmapSize
+  heatmapArgs$height = heatmapSize
+}
+if (!exists("host", inherits=F) || host == "") {
+  host = NULL
 }
 if (! exists("padjs", inherits=F)) {
   padjs = c(0.05)
 }
+if (!exists("pcaColours", inherits=F)) {
+  pcaColours = NULL
+}
 if (!exists("pcaIds", inherits=F)) {
   pcaIds = FALSE
-}
-if (!exists("filter", inherits=F)) {
-  filter = "ensembl_gene_id"
 }
 if (!exists("reference1", inherits=F)) {
   reference1 = "mRNA"
@@ -145,9 +174,6 @@ if (!exists("reference2", inherits=F)) {
 }
 if (!exists("useBMcache", inherits=F)) {
   useBMcache = FALSE
-}
-if (!exists("host", inherits=F) || host == "") {
-  host = NULL
 }
 
 
@@ -176,15 +202,18 @@ setwd(workingDir)
 
 
 #### Basic plots section
-# Plot dispersion estimates
+## Plot dispersion estimates
 get(extension)(paste("dispersion_estimate",extension, sep="."))
 plotDispEsts(data, ylim=c(1e-5, 1e1))
 dev.off()
-# Visualize sample distances
-get(extension)(paste("sample_distance-heatmap",extension, sep="."), width=10,height=10)
+## Visualize sample distances
+# pdf method uses 'file', while png and svg use 'filename', but both are as the first argument
+heatmapArgs[[names(formals(save))[1]]] = paste("sample_distance-heatmap",extension, sep=".")
+# To do not duplicate the call based on whether size is, or is not specified
+do.call(extension, heatmapArgs)
 gplots::heatmap.2(as.matrix(dist(t(assay(data.transformed)))), trace="none", col=colorRampPalette(rev(RColorBrewer::brewer.pal(9, "Blues")))(255))
 dev.off()
-# Make PCA plots
+## Make PCA plots
 plot_PCA = function(data, filename) {
   pca = plotPCA(data, intgroup=c("siRNA","assay"), returnData=TRUE, ntop=nrow(data))
   percentVar = round(100*attr(pca, "percentVar"))
@@ -194,6 +223,9 @@ plot_PCA = function(data, filename) {
          scale_shape_manual(values=c(21,24)) +
          xlab(paste0("PC1: ",percentVar[1],"% variance")) + ylab(paste0("PC2: ",percentVar[2],"% variance")) +
          coord_fixed(ratio=1)
+  if (!is.null(pcaColours)) {
+    plot = plot + scale_fill_manual(values=pcaColours)
+  }
   if (pcaIds) {
     plot = plot + ggrepel::geom_text_repel(aes(label=name), size=2, max.overlaps = Inf)
   }
@@ -202,6 +234,11 @@ plot_PCA = function(data, filename) {
 plot_PCA(data.transformed, "PCA")
 for (assay in unique(designTable$assay)) {
   plot_PCA(data.transformed[, data.transformed$assay %in% c(assay)], paste("PCA",assay, sep="-"))
+}
+
+
+if (!full) {
+  quit();
 }
 
 
@@ -244,13 +281,13 @@ process_results = function(result, type) {
   result.df$Expression = factor(dplyr::case_when(result.df$log2FoldChange > 0 & result.df$padj <= 0.05 ~ "Upregulated",
                                                  result.df$log2FoldChange < 0 & result.df$padj <= 0.05 ~ "Downregulated",
                                                  TRUE ~ "Unchanged"),
-                                c("Upregulated", "Unchanged", "Downregulated"))
+                                c("Downregulated", "Unchanged", "Upregulated"))
   ggplot(result.df, aes(x=log2FoldChange, y=-log10(padj), col=Expression)) +
     geom_point(size = 0.5, show.legend=TRUE) +
     xlab(expression("log"[2]*"(FC)")) + 
     ylab(expression("-log"[10]*"(p-adjusted)")) +
     scale_color_manual(values=c("blue", "grey", "red"), drop=FALSE) + 
-    guides(colour = guide_legend(override.aes=list(size=2))) 
+    guides(colour = guide_legend(override.aes=list(size=2), reverse=T)) 
   ggsave(paste0("Volcano-", type, "-", label2, "_vs_",reference2,".", extension))
 }
 # For each treated siRNA process mRNA, FP and TE
