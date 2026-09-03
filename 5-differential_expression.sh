@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to perform differential expression analysis.                                                                #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-02; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-03; license: Apache License 2.0             #
 ########################################################################################################################
 
 help() {
@@ -13,13 +13,17 @@ help() {
   echo "5-differential_expression.sh <programs> <output>	 Using custom scripts, performs differential expression analysis.";
   echo;
   echo "OPTIONS";
+  echo -d "-s NUM\t Size of a heatmap.";
   echo -e "-s URL\t Host to use to download annotations. Empty string means the default server. For more details, see biomaRt::useEnsembl.";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-02; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-03; license: Apache License 2.0";
 }
 
 while [ $# -gt 2 ]; do
   case $1 in
+    -d* | --d* ) shift;
+                 dim="$1";
+                 ;;
     -h* | --h* ) >&2 echo "Unexpected number of arguments: '$1'";
                  help;
                  exit 1;
@@ -78,7 +82,7 @@ for design in ${output}_deseq/design-*.tbl; do
   dir=${table%.tsv}-$( basename -s.tbl "$design" | cut -d- -f2- )/;
   echo $table $dir;
   mkdir -p "$dir";
-  ${programs}RibosomeProfiling/R_scripts/Differential_analysis.R $design $table --output "$dir" --reference2 $( basename -s.tbl ${design#*-} | sed -e 's/^eIF3cKD$/nt/; s/^eIF3cKI$/WT/' ) --pca_ids T ${host+--host "$host"} --use_bm_cache F &>"${dir}log.txt";
+  ${programs}RibosomeProfiling/R_scripts/Differential_analysis.R $design $table --output "$dir" --reference2 $( basename -s.tbl ${design#*-} | sed -e 's/^eIF3cKD$/nt/; s/^eIF3cKI$/WT/' ) --pca_ids T ${host+--host "$host"} ${dim+--heatmap_size "$dim"} --use_bm_cache F &>"${dir}log.txt";
 done;
 
 # Add name to the first column (it is easier than repair it within R)
