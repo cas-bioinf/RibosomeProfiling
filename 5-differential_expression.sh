@@ -55,7 +55,7 @@ else
   exit "$e";
 fi
 
-shopt -s extglob
+shopt -s extglob failglob
 
 # Create table with gene counts
 mkdir -p ${output}_deseq/
@@ -77,22 +77,21 @@ grep -v '_HEK_' ${output}_deseq/design-all.tbl >${output}_deseq/design-eIF3cKD.t
 sed '1p;/_HEK_/!d' ${output}_deseq/design-all.tbl >${output}_deseq/design-eIF3cKI.tbl
 rm ${output}_deseq/design-all.tbl
 
-# Differential expression etc.
 for design in ${output}_deseq/design-*.tbl; do
   dir=${table%.tsv}-$( basename -s.tbl "$design" | cut -d- -f2- )/;
   echo $table $dir;
   mkdir -p "$dir";
+  
+  # Differential expression etc.
   ${programs}RibosomeProfiling/R_scripts/Differential_analysis.R $design $table --output "$dir" --reference2 $( basename -s.tbl ${design#*-} | sed -e 's/^eIF3cKD$/nt/; s/^eIF3cKI$/WT/' ) --pca_ids T ${host+--host "$host"} ${dim+--heatmap_size "$dim"} --use_bm_cache F &>"${dir}log.txt";
-done;
 
-# Add name to the first column (it is easier than repair it within R)
-sed -i -e '1s/^""/"gene_id"/' ${output}_deseq/*/*.tbl
+  # Add name to the first column (it is easier than repair it within R)
+  sed -i -e '1s/^""/"gene_id"/' "${dir}"*.tbl
 
-# Aggregation of files
-for dir in ${output}_deseq/*/; do
+  # Aggregation of files
   i=1;
-  cut -f1,2 $( ls ${dir}!(sig*).tbl | head -n1 ) > ${dir}all.tbl.$i;
-  for file in ${dir}!(sig*).tbl; do
+  cut -f1,2 $( ls ${dir}{FP,mRNA,TE}-*.tbl | head -n1 ) > ${dir}all.tbl.$i;
+  for file in ${dir}{FP,mRNA,TE}-*.tbl; do
     j=$(($i+1));
     join -t $'\t' --header ${dir}all.tbl.$i <( cut -f1,3-7 $file | sed "1 s/\t\"/\t\"$( basename -s .tbl $file )./g" ) >${dir}all.tbl.$j;
     rm ${dir}all.tbl.$i;
@@ -100,9 +99,9 @@ for dir in ${output}_deseq/*/; do
   done;
   join -t $'\t' --header ${dir}all.tbl.$i <( cut -f1,8- $file ) > ${dir}all.tbl;
   rm ${dir}all.tbl.$i;
-done;
 
-# translation only
-for file in ${output}_deseq/*/sig0.05-TE-!(*[-_]*)_vs_!(*[-_]*).tbl; do
-  awk 'BEGIN{FS=OFS="\t"} NR==FNR{a[$1]++;next} FNR==1{print;next} !a[$1]' ${file/_TE_/_mRNA_} $file >${file%.tbl}-translation_only.tbl;
+  # translation only
+  for file in "${dir}"sig0.05-TE-!(*[-_]*)_vs_!(*[-_]*).tbl; do
+    awk 'BEGIN{FS=OFS="\t"} NR==FNR{a[$1]++;next} FNR==1{print;next} !a[$1]' ${file/_TE_/_mRNA_} $file >${file%.tbl}-translation_only.tbl;
+  done;
 done;
