@@ -56,8 +56,11 @@ help <- function(error = c()) {
                 "                               biomaRt records. If not specified, 'ensembl_gene_id' is used by default.",
                 "  --full {TRUE|FALSE}          Whether a full analysis should be done, or whether to perform initial checks",
                 "                               only. Full analysis is performed by default.",
-                "  --heatmap_size <size>        Width and height of the sample_distance-heatmap plot. For the default value,",
-                "                               check the selected file format (e.g. ?pdf).",
+                "  --heatmap_size <size>        Width and height of the sample_distance-heatmap plot with gplots::heatmap.2",
+                "                               default layout. If not specified, the size is automatically computed in the",
+                "                               following way: the minimal size of the heatmap for all labels are fully",
+                "                               visible is determined; the height of dendrograms is half of the size heatmap",
+                "                               without labels, but at least 1.5 inches.",
                 "  --host <url>                 Host to use to download annotations. Empty string means the default server.",
                 "                               For more details, see biomaRt::useEnsembl.",
                 "  --img {pdf|svg|png}          What file format (and extension) to use to save the plots.",
@@ -149,11 +152,6 @@ if (!exists("filter", inherits=F)) {
 if (!exists("full", inherits=F)) {
   full = TRUE
 }
-heatmapArgs = list()
-if (exists("heatmapSize", inherits=F)) {
-  heatmapArgs$width  = heatmapSize
-  heatmapArgs$height = heatmapSize
-}
 if (!exists("host", inherits=F) || host == "") {
   host = NULL
 }
@@ -208,10 +206,42 @@ plotDispEsts(data, ylim=c(1e-5, 1e1))
 dev.off()
 ## Visualize sample distances
 # pdf method uses 'file', while png and svg use 'filename', but both are as the first argument
-heatmapArgs[[names(formals(extension))[1]]] = paste("sample_distance-heatmap",extension, sep=".")
+file.arg = names(formals(extension))[1]
+heatmap.args.file = list()
+heatmap.args.plot = list(as.matrix(dist(t(assay(data.transformed)))), trace="none", col=colorRampPalette(rev(RColorBrewer::brewer.pal(9, "Blues")))(255))
+if (exists("heatmapSize", inherits=F)) {
+  heatmap.args.file$width  = heatmapSize
+  heatmap.args.file$height = heatmapSize
+} else {
+  cex = 1
+  heatmap.args.file[[file.arg]] = tempfile(fileext=paste0(".",extension))
+  heatmap.args.file$width  = 1
+  heatmap.args.file$height = 1
+  if ("units" %in% names(formals(extension))) { heatmap.args.file$units = "in" }
+  if ("res"   %in% names(formals(extension))) { heatmap.args.file$res   = 300 }
+  do.call(extension, heatmap.args.file)
+  heatmap.labels.width  = max(strwidth(colnames(data), cex=cex, units="in"))
+  heatmap.labels.height = par("cin")[2]
+  heatmap.labels.offset = par("mgp")[2]
+  dev.off()
+  unlink(heatmap.args.file[[file.arg]])
+
+  heatmap    = heatmap.labels.height*ncol(data)
+  labels     = heatmap.labels.width + (heatmap.labels.offset+0.2)*heatmap.labels.height
+  dendrogram = max(1.5, 0.5*heatmap)
+  heatmap.args.file$width  = heatmap+labels+dendrogram
+  heatmap.args.file$height = heatmap.args.file$width
+  heatmap.args.plot$cexRow  = cex
+  heatmap.args.plot$cexCol  = cex
+  heatmap.args.plot$lhei    = c(dendrogram, heatmap+labels)
+  heatmap.args.plot$lwid    = c(dendrogram, heatmap+labels)
+  heatmap.args.plot$margins = c(labels/h, labels/h)
+  heatmap.args.plot$key.par = list(mar=c(3, 3, 2, 0))
+}
+heatmap.args.file[[names(formals(extension))[1]]] = paste("sample_distance-heatmap", extension, sep=".")
 # To do not duplicate the call based on whether size is, or is not specified
-do.call(extension, heatmapArgs)
-gplots::heatmap.2(as.matrix(dist(t(assay(data.transformed)))), trace="none", col=colorRampPalette(rev(RColorBrewer::brewer.pal(9, "Blues")))(255))
+do.call(extension,         heatmap.args.file)
+do.call(gplots::heatmap.2, heatmap.args.plot)
 dev.off()
 ## Make PCA plots
 plot_PCA = function(data, filename) {
