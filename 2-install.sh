@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to install programs used during analysis and their prerequisities.                                          #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-31; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-04; license: Apache License 2.0             #
 ########################################################################################################################
 
 release_fastqc=0.12.1
@@ -14,7 +14,7 @@ elif [ $# -ne 1 ]; then
   echo;
   echo "2-install.sh <location> [<fastqc_version>]     Install used programs and their prerequisities; and save them to <location> if necessary. In the case of FastQC, version no. <fastqc_version> is used (${release_fastqc} by default).";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-08-31; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-04; license: Apache License 2.0";
   exit;
 fi
 
@@ -108,5 +108,5 @@ echo "mane2ensembl_gtf$(       ${programs}mane2ensembl_gtf       | tail -n1 | cu
 echo "filter_reverse_reads$(   ${programs}filter_reverse_reads   | tail -n1 | cut -d';' -f2 )"
 echo "filter_ambiguous_genes$( ${programs}filter_ambiguous_genes | tail -n1 | cut -d';' -f2 )"
 echo "select_transcripts$(     ${programs}select_transcripts     | tail -n1 | cut -d';' -f2 )"
-echo "select_features$(        ${programs}select_featuress       | tail -n1 | cut -d';' -f2 )"
+echo "select_features$(        ${programs}select_features        | tail -n1 | cut -d';' -f2 )"
 echo "gc_content$(             ${programs}gc_content             | tail -n1 | cut -d';' -f2 )"
