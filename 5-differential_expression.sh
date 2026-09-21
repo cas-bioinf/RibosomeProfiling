@@ -3,7 +3,7 @@
 ########################################################################################################################
 # A script to perform differential expression analysis.                                                                #
 #                                                                                                                      #
-# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-03; license: Apache License 2.0             #
+# Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-21; license: Apache License 2.0             #
 ########################################################################################################################
 
 help() {
@@ -13,10 +13,10 @@ help() {
   echo "5-differential_expression.sh <programs> <output>	 Using custom scripts, performs differential expression analysis.";
   echo;
   echo "OPTIONS";
-  echo -d "-s NUM\t Size of a heatmap.";
+  echo -e "-d NUM\t Size of a heatmap.";
   echo -e "-s URL\t Host to use to download annotations. Empty string means the default server. For more details, see biomaRt::useEnsembl.";
   echo;
-  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-03; license: Apache License 2.0";
+  echo "Created by Jan Jelínek (jan.jelinek@biomed.cas.cz); last update: 2026-09-21; license: Apache License 2.0";
 }
 
 while [ $# -gt 2 ]; do
